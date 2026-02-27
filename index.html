@@ -16,7 +16,7 @@
   <div id="feed">Loading…</div>
 
   <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRncKg3JL_B8hJaX9zIXT1eCeBoUIVMK3co3t3nyTo-4hCW8peCjqA8jD63lm8TZUAaPiEiYPdYUBpx/pub?output=csv"; // Published-to-web CSV link
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRncKg3JL_B8hJaX9zIXT1eCeBoUIVMK3co3t3nyTo-4hCW8peCjqA8jD63lm8TZUAaPiEiYPdYUBpx/pub?output=csv";
 
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, m => ({
@@ -25,7 +25,7 @@
     }
 
     function parseCSV(text) {
-      // Small CSV parser: handles quoted fields and commas inside quotes
+      // Handles quoted fields and commas inside quotes
       const rows = [];
       let row = [], field = "", inQuotes = false;
 
@@ -45,16 +45,17 @@
 
     function rowsToItems(rows) {
       const headers = rows[0].map((h, i) => {
-  let s = (h ?? "").trim().toLowerCase();
-  if (i === 0) s = s.replace(/^\uFEFF/, ""); // strip UTF-8 BOM if present
-  return s;
-});
+        let s = (h ?? "").trim().toLowerCase();
+        if (i === 0) s = s.replace(/^\uFEFF/, ""); // strip BOM if present
+        return s;
+      });
+
       const iDate = headers.indexOf("date");
       const iTitle = headers.indexOf("title");
       const iSummary = headers.indexOf("summary");
 
       if (iDate === -1 || iTitle === -1 || iSummary === -1) {
-        throw new Error("Sheet must have headers: date, title, summary");
+        throw new Error("Headers not found. Detected: " + headers.join(", "));
       }
 
       return rows.slice(1)
@@ -68,7 +69,6 @@
     }
 
     function render(items) {
-      // Sort newest first (expects YYYY-MM-DD; falls back safely)
       items.sort((a, b) => (new Date(b.date || "1970-01-01")) - (new Date(a.date || "1970-01-01")));
 
       const html = items.map(it => `
@@ -83,13 +83,15 @@
     }
 
     async function main() {
-      // Cache-buster: prevents stale CSV responses
+      // Cache-bust to avoid stale Google/GitHub/Sites caching
       const url = new URL(CSV_URL);
       url.searchParams.set("_ts", Date.now());
 
       const res = await fetch(url.toString(), { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch sheet CSV");
-      const text = await res.text();
+      if (!res.ok) throw new Error("Fetch failed: HTTP " + res.status);
+
+      let text = await res.text();
+      text = text.replace(/^\uFEFF/, ""); // also strip BOM at file start (extra-safe)
 
       const rows = parseCSV(text);
       if (rows.length < 2) { document.getElementById("feed").textContent = "No items yet."; return; }
@@ -100,8 +102,7 @@
 
     main().catch(err => {
       console.error(err);
-      document.getElementById("feed").textContent =
-        "Error loading feed. Check that your CSV is published and headers are date,title,summary.";
+      document.getElementById("feed").textContent = "Error loading feed: " + err.message;
     });
   </script>
 </body>
