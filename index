@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>News Feed Widget</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; }
+    .wrap { padding: 12px; }
+    .item { border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin: 10px 0; }
+    .meta { font-size: 12px; color: #555; margin-bottom: 6px; }
+    .title { font-weight: 700; margin: 0 0 6px 0; font-size: 16px; }
+    .summary { margin: 0 0 8px 0; color: #222; line-height: 1.35; }
+    .link { font-size: 13px; }
+    .bar { display:flex; gap:8px; margin-bottom: 10px; }
+    input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
+    select { padding:8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="bar">
+      <input id="q" placeholder="Search…" />
+      <select id="sort">
+        <option value="desc">Newest</option>
+        <option value="asc">Oldest</option>
+      </select>
+    </div>
+    <div id="feed">Loading…</div>
+  </div>
+
+<script>
+const CSV_URL = "PASTE_PUBLISHED_CSV_URL_HERE"; // Google Sheets "Publish to web" CSV link
+
+function parseCSV(text) {
+  // Minimal CSV parser (assumes no embedded newlines; handles quoted fields)
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (c === '"' && inQuotes && n === '"') { field += '"'; i++; continue; }
+    if (c === '"') { inQuotes = !inQuotes; continue; }
+    if (c === ',' && !inQuotes) { row.push(field); field = ''; continue; }
+    if (c === '\n' && !inQuotes) { row.push(field); rows.push(row); row = []; field = ''; continue; }
+    if (c !== '\r') field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function toObjects(rows) {
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1)
+    .filter(r => r.some(x => String(x).trim() !== ""))
+    .map(r => Object.fromEntries(headers.map((h, i) => [h, (r[i] ?? "").trim()])));
+}
+
+function render(items) {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const sort = document.getElementById('sort').value;
+
+  let filtered = items.filter(it => {
+    const hay = `${it.date||""} ${it.title||""} ${it.summary||""} ${it.source||""} ${it.tag||""}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  filtered.sort((a, b) => {
+    const da = new Date(a.date || "1970-01-01");
+    const db = new Date(b.date || "1970-01-01");
+    return sort === "desc" ? (db - da) : (da - db);
+  });
+
+  const feed = document.getElementById('feed');
+  if (!filtered.length) { feed.textContent = "No results."; return; }
+
+  feed.innerHTML = filtered.map(it => `
+    <div class="item">
+      <div class="meta">${it.date || ""}${it.source ? " · " + it.source : ""}${it.tag ? " · " + it.tag : ""}</div>
+      <div class="title">${escapeHtml(it.title || "")}</div>
+      <p class="summary">${escapeHtml(it.summary || "")}</p>
+      ${it.url ? `<div class="link"><a href="${it.url}" target="_blank" rel="noopener">Read</a></div>` : ""}
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function main() {
+  const res = await fetch(CSV_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch CSV");
+  const text = await res.text();
+  const rows = parseCSV(text);
+  const items = toObjects(rows);
+
+  document.getElementById('q').addEventListener('input', () => render(items));
+  document.getElementById('sort').addEventListener('change', () => render(items));
+  render(items);
+}
+
+main().catch(err => {
+  document.getElementById('feed').textContent = "Error loading feed.";
+  console.error(err);
+});
+</script>
+</body>
+</html>
