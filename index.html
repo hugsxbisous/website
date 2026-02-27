@@ -6,10 +6,28 @@
   <title>News Feed</title>
   <style>
     body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 12px; }
-    .item { border: 1px solid #ddd; border-radius: 10px; padding: 10px; margin: 10px 0; }
-    .date { font-size: 12px; color: #555; margin-bottom: 6px; }
-    .title { font-weight: 700; margin: 0 0 6px 0; }
-    .summary { margin: 0; line-height: 1.35; }
+    .item {
+      border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin: 12px 0;
+      display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: start;
+    }
+    .thumb {
+      width: 88px; height: 88px; border-radius: 10px; object-fit: cover;
+      background: #f2f2f2; border: 1px solid #eee;
+    }
+    .meta { font-size: 12px; color: #555; margin: 2px 0 8px 0; }
+    .title { font-weight: 700; margin: 0; font-size: 16px; line-height: 1.2; }
+    .desc { margin: 0; line-height: 1.35; color: #222; }
+    .toggle {
+      margin-top: 8px; background: none; border: none; padding: 0; cursor: pointer;
+      color: #0b57d0; font-size: 13px;
+    }
+    .toggle:hover { text-decoration: underline; }
+
+    /* Responsive: stack thumbnail above text on narrow screens */
+    @media (max-width: 420px) {
+      .item { grid-template-columns: 1fr; }
+      .thumb { width: 100%; height: 160px; }
+    }
   </style>
 </head>
 <body>
@@ -18,6 +36,9 @@
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRncKg3JL_B8hJaX9zIXT1eCeBoUIVMK3co3t3nyTo-4hCW8peCjqA8jD63lm8TZUAaPiEiYPdYUBpx/pub?output=csv";
 
+    // Tweak this: number of characters to show before "Show more"
+    const TRUNCATE_AT = 220;
+
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, m => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -25,7 +46,6 @@
     }
 
     function parseCSV(text) {
-      // Handles quoted fields and commas inside quotes
       const rows = [];
       let row = [], field = "", inQuotes = false;
 
@@ -43,19 +63,24 @@
       return rows;
     }
 
+    function normHeader(h, i) {
+      let s = (h ?? "").trim().toLowerCase();
+      if (i === 0) s = s.replace(/^\uFEFF/, ""); // strip BOM
+      return s;
+    }
+
     function rowsToItems(rows) {
-      const headers = rows[0].map((h, i) => {
-        let s = (h ?? "").trim().toLowerCase();
-        if (i === 0) s = s.replace(/^\uFEFF/, ""); // strip BOM if present
-        return s;
-      });
+      const headers = rows[0].map(normHeader);
 
-      const iDate = headers.indexOf("date");
-      const iTitle = headers.indexOf("title");
-      const iSummary = headers.indexOf("summary");
+      const idx = (name) => headers.indexOf(name);
 
-      if (iDate === -1 || iTitle === -1 || iSummary === -1) {
-        throw new Error("Headers not found. Detected: " + headers.join(", "));
+      const iDate = idx("date");
+      const iTitle = idx("title");
+      const iDesc = idx("description");
+      const iThumb = idx("thumbnail");
+
+      if (iDate === -1 || iTitle === -1 || iDesc === -1) {
+        throw new Error("Missing headers. Need: date,title,description (and optional thumbnail). Detected: " + headers.join(", "));
       }
 
       return rows.slice(1)
@@ -63,39 +88,102 @@
         .map(r => ({
           date: (r[iDate] ?? "").trim(),
           title: (r[iTitle] ?? "").trim(),
-          summary: (r[iSummary] ?? "").trim()
+          description: (r[iDesc] ?? "").trim(),
+          thumbnail: (iThumb !== -1 ? (r[iThumb] ?? "").trim() : "")
         }))
-        .filter(it => it.date || it.title || it.summary);
+        .filter(it => it.date || it.title || it.description || it.thumbnail);
+    }
+
+    function safeDateKey(d) {
+      // Sorting key: Date parsing can vary if not ISO; prefer YYYY-MM-DD
+      const t = Date.parse(d);
+      return Number.isFinite(t) ? t : Date.parse("1970-01-01");
+    }
+
+    function truncateText(s, n) {
+      if (s.length <= n) return { short: s, truncated: false };
+      // try to cut at a space
+      const cut = s.lastIndexOf(" ", n);
+      const end = cut > 80 ? cut : n;
+      return { short: s.slice(0, end).trim() + "…", truncated: true };
+    }
+
+    function isLikelyImageUrl(url) {
+      const u = String(url || "").trim();
+      if (!u) return false;
+      // Accept common image file extensions and many CDNs; keep permissive.
+      return /^https?:\/\//i.test(u);
     }
 
     function render(items) {
-      items.sort((a, b) => (new Date(b.date || "1970-01-01")) - (new Date(a.date || "1970-01-01")));
+      items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
 
-      const html = items.map(it => `
-        <div class="item">
-          <div class="date">${escapeHtml(it.date)}</div>
-          <div class="title">${escapeHtml(it.title)}</div>
-          <p class="summary">${escapeHtml(it.summary)}</p>
-        </div>
-      `).join("");
+      const feed = document.getElementById("feed");
+      if (!items.length) { feed.textContent = "No items yet."; return; }
 
-      document.getElementById("feed").innerHTML = html || "No items yet.";
+      feed.innerHTML = items.map((it, i) => {
+        const desc = it.description || "";
+        const t = truncateText(desc, TRUNCATE_AT);
+        const showToggle = t.truncated;
+
+        const thumbHtml = isLikelyImageUrl(it.thumbnail)
+          ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+          : `<div class="thumb" aria-hidden="true"></div>`;
+
+        return `
+          <div class="item">
+            ${thumbHtml}
+            <div>
+              <h3 class="title">${escapeHtml(it.title || "")}</h3>
+              <div class="meta">${escapeHtml(it.date || "")}</div>
+
+              <p class="desc"
+                 data-full="${escapeHtml(desc)}"
+                 data-short="${escapeHtml(t.short)}"
+                 data-expanded="false"
+                 id="desc-${i}">
+                ${escapeHtml(t.short)}
+              </p>
+
+              ${showToggle ? `<button class="toggle" type="button" data-target="desc-${i}">Show more</button>` : ``}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Wire up toggles (event delegation)
+      feed.addEventListener("click", (e) => {
+        const btn = e.target.closest("button.toggle");
+        if (!btn) return;
+
+        const id = btn.getAttribute("data-target");
+        const p = document.getElementById(id);
+        if (!p) return;
+
+        const expanded = p.getAttribute("data-expanded") === "true";
+        if (expanded) {
+          p.textContent = p.getAttribute("data-short") || "";
+          p.setAttribute("data-expanded", "false");
+          btn.textContent = "Show more";
+        } else {
+          p.textContent = p.getAttribute("data-full") || "";
+          p.setAttribute("data-expanded", "true");
+          btn.textContent = "Show less";
+        }
+      }, { once: true }); // attach once after rendering
     }
 
     async function main() {
-      // Cache-bust to avoid stale Google/GitHub/Sites caching
       const url = new URL(CSV_URL);
-      url.searchParams.set("_ts", Date.now());
+      url.searchParams.set("_ts", Date.now()); // cache-buster
 
       const res = await fetch(url.toString(), { cache: "no-store" });
       if (!res.ok) throw new Error("Fetch failed: HTTP " + res.status);
 
       let text = await res.text();
-      text = text.replace(/^\uFEFF/, ""); // also strip BOM at file start (extra-safe)
+      text = text.replace(/^\uFEFF/, ""); // extra-safe BOM strip
 
       const rows = parseCSV(text);
-      if (rows.length < 2) { document.getElementById("feed").textContent = "No items yet."; return; }
-
       const items = rowsToItems(rows);
       render(items);
     }
