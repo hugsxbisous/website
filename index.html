@@ -44,7 +44,11 @@
     }
 
     function rowsToItems(rows) {
-      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const headers = rows[0].map((h, i) => {
+  let s = (h ?? "").trim().toLowerCase();
+  if (i === 0) s = s.replace(/^\uFEFF/, ""); // strip UTF-8 BOM if present
+  return s;
+});
       const iDate = headers.indexOf("date");
       const iTitle = headers.indexOf("title");
       const iSummary = headers.indexOf("summary");
