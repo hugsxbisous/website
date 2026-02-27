@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Feed Widget</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 12px; }
+    .header { margin-bottom: 10px; }
+    .widget-title { font-weight: 700; font-size: 16px; margin: 0 0 4px 0; }
+    .subtle { font-size: 12px; color: #666; margin: 0; }
+    .item {
+      border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin: 12px 0;
+      display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: start;
+    }
+    .thumb {
+      width: 88px; height: 88px; border-radius: 10px; object-fit: cover;
+      background: #f2f2f2; border: 1px solid #eee;
+    }
+    .meta { font-size: 12px; color: #555; margin: 2px 0 8px 0; }
+    .title { font-weight: 700; margin: 0; font-size: 16px; line-height: 1.2; }
+    .desc { margin: 0; line-height: 1.35; color: #222; }
+    .toggle {
+      margin-top: 8px; background: none; border: none; padding: 0; cursor: pointer;
+      color: #0b57d0; font-size: 13px;
+    }
+    .toggle:hover { text-decoration: underline; }
+    .error { color: #b00020; font-size: 13px; }
+    @media (max-width: 420px) {
+      .item { grid-template-columns: 1fr; }
+      .thumb { width: 100%; height: 160px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header" id="header" style="display:none;">
+    <p class="widget-title" id="widgetTitle"></p>
+    <p class="subtle" id="widgetSub"></p>
+  </div>
+
+  <div id="feed">Loading…</div>
+
+<script>
+  function getParam(name) {
+    return new URLSearchParams(location.search).get(name);
+  }
+
+  const CSV_URL = getParam("csv");          // required
+  const WIDGET_TITLE = getParam("title");   // optional
+  const MAX_ITEMS = Math.max(1, Math.min(200, parseInt(getParam("max") || "50", 10)));
+  const TRUNCATE_AT = Math.max(80, Math.min(2000, parseInt(getParam("truncate") || "220", 10)));
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[m]);
+  }
+
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = "", inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i], n = text[i + 1];
+      if (c === '"' && inQuotes && n === '"') { field += '"'; i++; continue; }
+      if (c === '"') { inQuotes = !inQuotes; continue; }
+      if (c === "," && !inQuotes) { row.push(field); field = ""; continue; }
+      if (c === "\n" && !inQuotes) { row.push(field); rows.push(row); row = []; field = ""; continue; }
+      if (c !== "\r") field += c;
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function normalizeHeader(h, i) {
+    let s = (h ?? "");
+    if (i === 0) s = s.replace(/^\uFEFF/, "");
+    s = s.replace(/\u00A0/g, " ");
+    return s.trim().toLowerCase();
+  }
+
+  function truncateText(s, n) {
+    if (s.length <= n) return { short: s, truncated: false };
+    const cut = s.lastIndexOf(" ", n);
+    const end = cut > 80 ? cut : n;
+    return { short: s.slice(0, end).trim() + "…", truncated: true };
+  }
+
+  function safeDateKey(d) {
+    const t = Date.parse(d);
+    return Number.isFinite(t) ? t : Date.parse("1970-01-01");
+  }
+
+  function isLikelyUrl(u) {
+    return /^https?:\/\//i.test(String(u || "").trim());
+  }
+
+  function rowsToItems(rows) {
+    const headers = rows[0].map(normalizeHeader);
+    const idx = (name) => headers.indexOf(name);
+
+    const iDate = idx("date");
+    const iTitle = idx("title");
+    const iDesc = idx("description");
+    const iSummary = idx("summary");
+    const iThumb = idx("thumbnail");
+    const iText = (iDesc !== -1) ? iDesc : iSummary;
+
+    if (iDate === -1 || iTitle === -1 || iText === -1) {
+      throw new Error(
+        "Headers missing. Need: date, title, and (description OR summary). Optional: thumbnail. " +
+        "Detected: " + headers.join(" | ")
+      );
+    }
+
+    return rows.slice(1)
+      .filter(r => r.some(x => String(x).trim() !== ""))
+      .map(r => ({
+        date: (r[iDate] ?? "").trim(),
+        title: (r[iTitle] ?? "").trim(),
+        description: (r[iText] ?? "").trim(),
+        thumbnail: (iThumb !== -1 ? (r[iThumb] ?? "").trim() : "")
+      }))
+      .filter(it => it.date || it.title || it.description || it.thumbnail);
+  }
+
+  function render(items) {
+    items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+    items = items.slice(0, MAX_ITEMS);
+
+    const feed = document.getElementById("feed");
+    if (!items.length) { feed.textContent = "No items yet."; return; }
+
+    feed.innerHTML = items.map((it, i) => {
+      const t = truncateText(it.description || "", TRUNCATE_AT);
+      const thumbHtml = isLikelyUrl(it.thumbnail)
+        ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+        : `<div class="thumb" aria-hidden="true"></div>`;
+
+      return `
+        <div class="item">
+          ${thumbHtml}
+          <div>
+            <h3 class="title">${escapeHtml(it.title || "")}</h3>
+            <div class="meta">${escapeHtml(it.date || "")}</div>
+
+            <p class="desc"
+               id="desc-${i}"
+               data-full="${escapeHtml(it.description || "")}"
+               data-short="${escapeHtml(t.short)}"
+               data-expanded="false">${escapeHtml(t.short)}</p>
+
+            ${t.truncated ? `<button class="toggle" type="button" data-target="desc-${i}">Show more</button>` : ``}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Toggle handler
+    feed.addEventListener("click", (e) => {
+      const btn = e.target.closest("button.toggle");
+      if (!btn) return;
+      const id = btn.getAttribute("data-target");
+      const p = document.getElementById(id);
+      if (!p) return;
+
+      const expanded = p.getAttribute("data-expanded") === "true";
+      if (expanded) {
+        p.textContent = p.getAttribute("data-short") || "";
+        p.setAttribute("data-expanded", "false");
+        btn.textContent = "Show more";
+      } else {
+        p.textContent = p.getAttribute("data-full") || "";
+        p.setAttribute("data-expanded", "true");
+        btn.textContent = "Show less";
+      }
+    }, { once: true });
+  }
+
+  function showHeader() {
+    if (!WIDGET_TITLE) return;
+    document.getElementById("header").style.display = "block";
+    document.getElementById("widgetTitle").textContent = WIDGET_TITLE;
+    document.getElementById("widgetSub").textContent = "Updated from Google Sheets";
+  }
+
+  async function main() {
+    if (!CSV_URL) {
+      document.getElementById("feed").innerHTML =
+        `<div class="error">Missing required URL parameter <b>csv</b>.</div>
+         <div style="font-size:13px;margin-top:6px;">
+           Example: <code>?csv=PASTE_PUBLISHED_CSV_URL&amp;title=My%20Feed</code>
+         </div>`;
+      return;
+    }
+
+    showHeader();
+
+    const url = new URL(CSV_URL);
+    url.searchParams.set("_ts", Date.now()); // cache-bust the CSV
+
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) throw new Error("Fetch failed: HTTP " + res.status);
+
+    let text = await res.text();
+    text = text.replace(/^\uFEFF/, "");
+
+    const rows = parseCSV(text);
+    const items = rowsToItems(rows);
+    render(items);
+  }
+
+  main().catch(err => {
+    console.error(err);
+    document.getElementById("feed").innerHTML = `<div class="error">Error loading feed: ${escapeHtml(err.message)}</div>`;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Make a News Feed Widget</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 16px; max-width: 900px; }
+    h1 { font-size: 18px; margin: 0 0 10px 0; }
+    h2 { font-size: 15px; margin: 18px 0 8px 0; }
+    p, li { font-size: 14px; line-height: 1.4; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin: 12px 0; }
+    .btn {
+      display: inline-block; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid #0b57d0; color: #fff; background: #0b57d0;
+      text-decoration: none; font-size: 14px;
+    }
+    .btn.secondary { background: #fff; color: #0b57d0; }
+    label { display:block; font-size: 13px; margin-bottom: 6px; color: #333; }
+    input, textarea {
+      width: 100%; box-sizing: border-box;
+      border: 1px solid #ccc; border-radius: 10px; padding: 10px;
+      font-size: 13px;
+    }
+    textarea { min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .row { display:flex; gap:10px; flex-wrap: wrap; }
+    .row > div { flex: 1 1 240px; }
+    .note { color: #555; font-size: 12px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <h1>Make your own Google-Sheet-powered News Feed Widget</h1>
+
+  <div class="card">
+    <h2>1) Copy the template sheet</h2>
+    <p>Click the button to create your own copy of the template.</p>
+    <p>
+      <a class="btn" id="copyBtn" target="_blank" rel="noopener">Make my own Google Sheet</a>
+    </p>
+    <p class="note">
+      The template is view-only. Your copy will be in your Google Drive.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>2) Fill out your sheet</h2>
+    <p>Use these columns (row 1):</p>
+    <ul>
+      <li><code>date</code> (recommended format: YYYY-MM-DD)</li>
+      <li><code>title</code></li>
+      <li><code>description</code></li>
+      <li><code>thumbnail</code> (optional URL to an image)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3) Publish your sheet as CSV</h2>
+    <ol>
+      <li>In Google Sheets: <b>File → Share → Publish to web</b></li>
+      <li>Publish the sheet (or the correct tab)</li>
+      <li>Confirm the published link ends with something like: <code>pub?output=csv</code></li>
+    </ol>
+    <p class="note">
+      If your link looks like <code>/edit#gid=...</code>, it is not the published CSV link.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>4) Paste your published CSV link here</h2>
+
+    <label for="csv">Published CSV URL</label>
+    <input id="csv" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" />
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label for="title">Widget title (optional)</label>
+        <input id="title" placeholder="My News Feed" />
+      </div>
+      <div>
+        <label for="max">Max items (optional)</label>
+        <input id="max" placeholder="50" />
+      </div>
+      <div>
+        <label for="truncate">Truncate length (optional)</label>
+        <input id="truncate" placeholder="220" />
+      </div>
+    </div>
+
+    <p style="margin-top:12px;">
+      <button class="btn" id="genBtn" type="button">Generate my widget link</button>
+      <button class="btn secondary" id="clearBtn" type="button">Clear</button>
+    </p>
+
+    <div id="out" style="display:none;">
+      <h2>Your widget URL</h2>
+      <textarea id="widgetUrl" readonly></textarea>
+
+      <h2>Embed code (iframe)</h2>
+      <textarea id="iframeCode" readonly></textarea>
+
+      <h2>Send this back</h2>
+      <textarea id="sendBack" readonly></textarea>
+
+      <p class="note">
+        If a platform caches the iframe, append <code>&v=2</code>, then bump the number when needed.
+      </p>
+    </div>
+  </div>
+
+<script>
+  // 1) Set your template "force copy" link (ends with /copy)
+  const TEMPLATE_COPY_LINK = "https://docs.google.com/spreadsheets/d/19JBFSIHxnLPQWl2OlXtqWUaclzS64fxf6clwGblTqXI/copy";
+
+  // 2) Set your widget base URL (your GitHub Pages domain + repo)
+  // Example: "https://YOUR-USERNAME.github.io/website"
+  const BASE = "https://hugsxbisous.github.io/website/";
+
+  // Your generic widget path (from earlier): /widget/
+  const WIDGET_PATH = "/widget/";
+
+  document.getElementById("copyBtn").href = TEMPLATE_COPY_LINK;
+
+  function cleanNum(s, fallback) {
+    const n = parseInt(String(s || "").trim(), 10);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function buildWidgetUrl() {
+    const csv = document.getElementById("csv").value.trim();
+    const title = document.getElementById("title").value.trim();
+    const max = cleanNum(document.getElementById("max").value, 50);
+    const truncate = cleanNum(document.getElementById("truncate").value, 220);
+
+    if (!csv) throw new Error("Please paste your published CSV URL.");
+
+    const u = new URL(BASE + WIDGET_PATH);
+    u.searchParams.set("csv", csv);
+    if (title) u.searchParams.set("title", title);
+    if (max) u.searchParams.set("max", String(max));
+    if (truncate) u.searchParams.set("truncate", String(truncate));
+    return u.toString();
+  }
+
+  document.getElementById("genBtn").addEventListener("click", () => {
+    try {
+      const widgetUrl = buildWidgetUrl();
+      const iframe = `<iframe src="${widgetUrl}" width="100%" height="650" style="border:0;" loading="lazy"></iframe>`;
+
+      document.getElementById("widgetUrl").value = widgetUrl;
+      document.getElementById("iframeCode").value = iframe;
+      document.getElementById("sendBack").value =
+        `Here is my published CSV link:\n${document.getElementById("csv").value.trim()}\n\nHere is my widget URL:\n${widgetUrl}`;
+
+      document.getElementById("out").style.display = "block";
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    ["csv","title","max","truncate"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("out").style.display = "none";
+  });
+</script>
+</body>
+</html>
