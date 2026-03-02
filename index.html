@@ -3,42 +3,122 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>News Feed</title>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 12px; }
-    .item {
-      border: 1px solid #ddd; border-radius: 12px; padding: 12px; margin: 12px 0;
-      display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: start;
-    }
-    .thumb {
-      width: 88px; height: 88px; border-radius: 10px; object-fit: cover;
-      background: #f2f2f2; border: 1px solid #eee;
-    }
-    .meta { font-size: 12px; color: #555; margin: 2px 0 8px 0; }
-    .title { font-weight: 700; margin: 0; font-size: 16px; line-height: 1.2; }
-    .desc { margin: 0; line-height: 1.35; color: #222; }
-    .toggle {
-      margin-top: 8px; background: none; border: none; padding: 0; cursor: pointer;
-      color: #0b57d0; font-size: 13px;
-    }
-    .toggle:hover { text-decoration: underline; }
+  body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 12px; }
 
-    /* Responsive: stack thumbnail above text on narrow screens */
-    @media (max-width: 420px) {
-      .item { grid-template-columns: 1fr; }
-      .thumb { width: 100%; height: 160px; }
-    }
-  </style>
+  .topbar { margin-bottom: 14px; }
+
+  .carousel {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .track {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 2px 40px; /* room for arrows */
+    margin: 0;
+  }
+
+  /* Hide scrollbar (best-effort) */
+  .track::-webkit-scrollbar { display: none; }
+  .track { scrollbar-width: none; }
+
+  .card {
+    flex: 0 0 86%;
+    max-width: 720px;
+    scroll-snap-align: start;
+
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 14px;
+
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 14px;
+    align-items: start;
+
+    min-height: 160px; /* taller */
+    background: #fff;
+  }
+
+  .thumb {
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f2f2f2;
+    border: 1px solid #eee;
+  }
+
+  .title {
+    font-weight: 700;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .meta { font-size: 12px; color: #555; margin: 4px 0 10px 0; }
+  .desc { margin: 0; line-height: 1.4; color: #222; font-size: 14px; }
+
+  .toggle {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #0b57d0;
+    font-size: 13px;
+  }
+  .toggle:hover { text-decoration: underline; }
+
+  .arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    user-select: none;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .arrow:active { transform: translateY(-50%) scale(0.98); }
+
+  .arrow.left { left: 6px; }
+  .arrow.right { right: 6px; }
+
+  /* Mobile: stack thumbnail on top */
+  @media (max-width: 520px) {
+    .card { grid-template-columns: 1fr; }
+    .thumb { width: 100%; height: 190px; }
+    .track { padding: 2px 34px; }
+  }
+</style>
 </head>
 <body>
-  <div style="margin-bottom:14px;">
-    <a href="./make/" target="_blank" rel="noopener"
-       style="font-size:13px; color:#0b57d0; text-decoration:none;">
-      Create your own feed
-    </a>
-  </div>
-  <div id="feed">Loading…</div>
+<div class="topbar">
+  <a href="./make/" target="_blank" rel="noopener"
+     style="font-size:13px; color:#0b57d0; text-decoration:none;">
+    Create your own feed
+  </a>
+</div>
 
+<div class="carousel">
+  <button class="arrow left" id="prev" type="button" aria-label="Previous">‹</button>
+  <button class="arrow right" id="next" type="button" aria-label="Next">›</button>
+
+  <div class="track" id="feed" aria-label="News carousel">
+    Loading…
+  </div>
+</div>
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRncKg3JL_B8hJaX9zIXT1eCeBoUIVMK3co3t3nyTo-4hCW8peCjqA8jD63lm8TZUAaPiEiYPdYUBpx/pub?output=csv";
 
@@ -122,62 +202,100 @@
     }
 
     function render(items) {
-      items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+  // newest first
+  items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
 
-      const feed = document.getElementById("feed");
-      if (!items.length) { feed.textContent = "No items yet."; return; }
+  const feed = document.getElementById("feed");
+  if (!items.length) { feed.textContent = "No items yet."; return; }
 
-      feed.innerHTML = items.map((it, i) => {
-        const desc = it.description || "";
-        const t = truncateText(desc, TRUNCATE_AT);
-        const showToggle = t.truncated;
+  // Build cards
+  feed.innerHTML = items.map((it, i) => {
+    const desc = it.description || "";
+    const t = truncateText(desc, TRUNCATE_AT);
 
-        const thumbHtml = isLikelyImageUrl(it.thumbnail)
-          ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
-          : `<div class="thumb" aria-hidden="true"></div>`;
+    const thumbHtml = isLikelyImageUrl(it.thumbnail)
+      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+      : `<div class="thumb" aria-hidden="true"></div>`;
 
-        return `
-          <div class="item">
-            ${thumbHtml}
-            <div>
-              <h3 class="title">${escapeHtml(it.title || "")}</h3>
-              <div class="meta">${escapeHtml(it.date || "")}</div>
+    return `
+      <article class="card" data-index="${i}">
+        ${thumbHtml}
+        <div>
+          <h3 class="title">${escapeHtml(it.title || "")}</h3>
+          <div class="meta">${escapeHtml(it.date || "")}</div>
 
-              <p class="desc"
-                 data-full="${escapeHtml(desc)}"
-                 data-short="${escapeHtml(t.short)}"
-                 data-expanded="false"
-                 id="desc-${i}">
-                ${escapeHtml(t.short)}
-              </p>
+          <p class="desc"
+             data-full="${escapeHtml(desc)}"
+             data-short="${escapeHtml(t.short)}"
+             data-expanded="false"
+             id="desc-${i}">
+            ${escapeHtml(t.short)}
+          </p>
 
-              ${showToggle ? `<button class="toggle" type="button" data-target="desc-${i}">Show more</button>` : ``}
-            </div>
-          </div>
-        `;
-      }).join("");
+          ${t.truncated ? `<button class="toggle" type="button" data-target="desc-${i}">Show more</button>` : ``}
+        </div>
+      </article>
+    `;
+  }).join("");
 
-      // Wire up toggles (event delegation)
-      feed.addEventListener("click", (e) => {
-        const btn = e.target.closest("button.toggle");
-        if (!btn) return;
+  // --- Show more/less (delegated, attached once per render) ---
+  feed.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.toggle");
+    if (!btn) return;
 
-        const id = btn.getAttribute("data-target");
-        const p = document.getElementById(id);
-        if (!p) return;
+    const id = btn.getAttribute("data-target");
+    const p = document.getElementById(id);
+    if (!p) return;
 
-        const expanded = p.getAttribute("data-expanded") === "true";
-        if (expanded) {
-          p.textContent = p.getAttribute("data-short") || "";
-          p.setAttribute("data-expanded", "false");
-          btn.textContent = "Show more";
-        } else {
-          p.textContent = p.getAttribute("data-full") || "";
-          p.setAttribute("data-expanded", "true");
-          btn.textContent = "Show less";
-        }
-      }, { once: true }); // attach once after rendering
+    const expanded = p.getAttribute("data-expanded") === "true";
+    if (expanded) {
+      p.textContent = p.getAttribute("data-short") || "";
+      p.setAttribute("data-expanded", "false");
+      btn.textContent = "Show more";
+    } else {
+      p.textContent = p.getAttribute("data-full") || "";
+      p.setAttribute("data-expanded", "true");
+      btn.textContent = "Show less";
     }
+  }, { once: true });
+
+  // --- Carousel controls with looping ---
+  const cards = Array.from(feed.querySelectorAll(".card"));
+  let current = 0;
+
+  function scrollToIndex(idx) {
+    if (!cards.length) return;
+    current = (idx + cards.length) % cards.length; // loop
+    cards[current].scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }
+
+  document.getElementById("next").onclick = () => scrollToIndex(current + 1);
+  document.getElementById("prev").onclick = () => scrollToIndex(current - 1);
+
+  // Keep current index in sync if user swipes/scrolls manually
+  const updateCurrentFromScroll = () => {
+    // Find card whose left edge is closest to the container's left edge
+    const left = feed.getBoundingClientRect().left;
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < cards.length; i++) {
+      const dist = Math.abs(cards[i].getBoundingClientRect().left - left);
+      if (dist < bestDist) { bestDist = dist; best = i; }
+    }
+    current = best;
+  };
+
+  let scrollTimer = null;
+  feed.addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(updateCurrentFromScroll, 80);
+  });
+
+  // Optional: keyboard arrows when focused on page
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") scrollToIndex(current + 1);
+    if (e.key === "ArrowLeft") scrollToIndex(current - 1);
+  }, { once: true });
+}
 
     async function main() {
       const url = new URL(CSV_URL);
