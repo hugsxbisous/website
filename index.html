@@ -18,8 +18,9 @@
     gap: 14px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    scroll-snap-stop: always;
     scroll-behavior: smooth;
-    padding: 2px 40px; /* room for arrows */
+    padding: 2px 40px;
     margin: 0;
   }
 
@@ -28,9 +29,10 @@
   .track { scrollbar-width: none; }
 
   .card {
-    flex: 0 0 86%;
-    max-width: 720px;
-    scroll-snap-align: start;
+    /* one card per view */
+    flex: 0 0 calc(100% - 80px); /* 80px accounts for track left/right padding (40 + 40) */
+    max-width: calc(100% - 80px);
+    scroll-snap-align: center;
 
     border: 1px solid #ddd;
     border-radius: 14px;
@@ -41,7 +43,7 @@
     gap: 14px;
     align-items: start;
 
-    min-height: 160px; /* taller */
+    min-height: 160px;
     background: #fff;
   }
 
@@ -97,11 +99,15 @@
 
   /* Mobile: stack thumbnail on top */
   @media (max-width: 520px) {
-    .card { grid-template-columns: 1fr; }
+    .card {
+      grid-template-columns: 1fr;
+      flex: 0 0 calc(100% - 68px);   /* 34 + 34 */
+      max-width: calc(100% - 68px);
+    }
     .thumb { width: 100%; height: 190px; }
     .track { padding: 2px 34px; }
   }
-</style>
+  </style>
 </head>
 <body>
 <div class="topbar">
