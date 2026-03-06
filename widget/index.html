@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CSV Carousel Widget Prototype</title>
+  <title>Google Sheet Carousel Widget Prototype</title>
   <style>
     /*
       ------------------------------------------------------------
       BASIC PAGE STYLING
       ------------------------------------------------------------
-      This file is a self-contained prototype for one widget.
-      It includes:
-      1. A sample CSV string
-      2. Parsing logic in JavaScript
-      3. Carousel rendering
-      4. Auto-rotation + arrow controls
+      This file now pulls data from a published Google Sheet as CSV.
 
-      Later, you can split this into separate files:
-      - style.css
-      - script.js
-      - data.csv
+      Expected Google Sheet columns:
+      - date
+      - title
+      - blurb
+      - background image
+
+      Important:
+      1. The sheet must be published to the web as CSV.
+      2. The first row must contain those exact headers.
+      3. The background image column should contain a direct image URL.
     */
 
     :root {
@@ -59,13 +60,6 @@
       line-height: 1.5;
     }
 
-    /*
-      ------------------------------------------------------------
-      WIDGET WRAPPER
-      ------------------------------------------------------------
-      The carousel only shows one card at a time.
-      Internally, JavaScript swaps the active slide.
-    */
     .widget-shell {
       background: var(--card-bg);
       border-radius: 24px;
@@ -86,10 +80,6 @@
       background: #dbe3ef;
     }
 
-    /*
-      Each slide is absolutely positioned on top of each other.
-      Only the active slide is visible.
-    */
     .slide {
       position: absolute;
       inset: 0;
@@ -216,6 +206,7 @@
       height: 10px;
       border-radius: 50%;
       background: #cbd5e1;
+      cursor: pointer;
     }
 
     .dot.active {
@@ -230,6 +221,15 @@
       padding: 18px;
       line-height: 1.55;
       color: #334155;
+    }
+
+    .error-box {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #fee2e2;
+      color: #991b1b;
+      display: none;
     }
 
     code {
@@ -277,61 +277,96 @@
           <div class="dot-row" id="dotRow" aria-label="Slide indicators"></div>
         </div>
       </div>
+
+      <div class="error-box" id="errorBox"></div>
     </section>
 
     <section class="notes">
-      <strong>How to replace the sample data later:</strong><br />
-      Right now the widget uses a CSV string inside the file for easy testing.
-      Later you can swap that out for <code>fetch('data.csv')</code>, or for a published
-      Google Sheet CSV link.
+      <strong>Google Sheet setup:</strong><br />
+      Your sheet should have these exact headers in row 1:<br />
+      <code>date</code>, <code>title</code>, <code>blurb</code>, <code>background image</code><br /><br />
+      Then publish the sheet to the web as CSV and paste the CSV link into the
+      <code>GOOGLE_SHEET_CSV_URL</code> constant in the script.
     </section>
   </main>
 
   <script>
     /*
       ============================================================
-      1. SAMPLE CSV DATA
+      1. GOOGLE SHEET CSV URL
       ============================================================
-      Columns used here:
-      - date: used for chronological sorting
-      - title: headline shown on the card
-      - image: background image URL
-      - caption: overlay body text
+      Replace this with your published Google Sheet CSV URL.
 
-      IMPORTANT:
-      This simple parser assumes commas are not used inside the fields.
-      For an early prototype, that is okay.
-      Later, if you expect commas inside captions, use a real CSV parser
-      such as Papa Parse.
+      Example published CSV URL format:
+      https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=0
+
+      Keep the sheet public or published, or fetch will fail.
     */
-    const sampleCsv = `date,title,image,caption
-2026-03-05,Campus Spring Showcase,https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1400&q=80,The student showcase opened this week with new installations and performances across campus. The event highlights interdisciplinary work and draws visitors from several departments. It will continue through the weekend with evening programming.
-2026-03-03,New Studio Release,https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=80,The art studio released a new collaborative piece focused on color and motion. Early reactions have been enthusiastic, especially regarding the composition and surface detail. Additional behind the scenes notes will be published soon for supporters.
-2026-02-28,Community Workshop,https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80,Participants gathered for a hands-on workshop centered on character design and visual storytelling. The session covered ideation, thumbnails, and practical feedback techniques. Organizers plan to expand the format into a recurring monthly series.
-2026-02-21,Seasonal Illustration Drop,https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80,A new seasonal set of illustrations is now available and includes several bright, whimsical compositions. The release leans heavily into floral motifs and layered textures. Audience response suggests strong interest in future themed collections.
-2026-02-10,Open Call Announcement,https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80,An open call has been announced for creators who want to submit work for the next collaborative showcase. Entries will be reviewed on a rolling basis until the stated deadline. Selected participants will be featured in both digital and in-person formats.`;
+    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTnUiGhyQqofnf5mO6QdGU28VQRhqiXMXVtGfiD5Fy0LkqVyGinHslpw-vN8rcB6ugnIeMVJJT3gn-A/pub?output=csv';
 
     /*
       ============================================================
-      2. BASIC CSV PARSER
+      2. PARSE CSV SAFELY
       ============================================================
-      This converts the CSV string into an array of objects.
-      Example output:
-      [
-        { date: '2026-03-05', title: '...', image: '...', caption: '...' },
-        ...
-      ]
-    */
-    function parseSimpleCsv(csvText) {
-      const lines = csvText.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
+      This parser handles quoted fields, commas inside text, and line breaks
+      better than the original simple parser.
 
-      return lines.slice(1).map(line => {
-        const values = line.split(',');
+      That matters because blurbs may easily contain commas.
+    */
+    function parseCsv(csvText) {
+      const rows = [];
+      let currentRow = [];
+      let currentValue = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            currentValue += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          currentRow.push(currentValue);
+          currentValue = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && nextChar === '\n') {
+            i++;
+          }
+
+          currentRow.push(currentValue);
+          currentValue = '';
+
+          if (currentRow.some(cell => cell.trim() !== '')) {
+            rows.push(currentRow);
+          }
+
+          currentRow = [];
+        } else {
+          currentValue += char;
+        }
+      }
+
+      if (currentValue.length > 0 || currentRow.length > 0) {
+        currentRow.push(currentValue);
+        if (currentRow.some(cell => cell.trim() !== '')) {
+          rows.push(currentRow);
+        }
+      }
+
+      if (!rows.length) return [];
+
+      const headers = rows[0].map(header => header.trim().toLowerCase());
+
+      return rows.slice(1).map(row => {
         const item = {};
 
         headers.forEach((header, index) => {
-          item[header] = (values[index] || '').trim();
+          item[header] = (row[index] || '').trim();
         });
 
         return item;
@@ -340,9 +375,31 @@
 
     /*
       ============================================================
-      3. SORT SO MOST RECENT SHOWS FIRST
+      3. NORMALIZE COLUMN NAMES
       ============================================================
-      Newest date should be at index 0.
+      Your sheet columns are:
+      - date
+      - title
+      - blurb
+      - background image
+
+      We convert them into consistent property names used by the widget.
+    */
+    function normalizeItems(rawItems) {
+      return rawItems
+        .map(item => ({
+          date: item['date'] || '',
+          title: item['title'] || '',
+          blurb: item['blurb'] || '',
+          backgroundImage: item['background image'] || ''
+        }))
+        .filter(item => item.date && item.title && item.blurb && item.backgroundImage);
+    }
+
+    /*
+      ============================================================
+      4. SORT SO MOST RECENT SHOWS FIRST
+      ============================================================
     */
     function sortNewestFirst(items) {
       return [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -350,10 +407,8 @@
 
     /*
       ============================================================
-      4. TEXT TRUNCATION HELPER
+      5. TEXT TRUNCATION HELPER
       ============================================================
-      Requirement: show a button after about 200 characters.
-      We return both the shortened text and whether truncation happened.
     */
     function getTruncatedText(text, maxChars = 200) {
       if (text.length <= maxChars) {
@@ -371,30 +426,25 @@
 
     /*
       ============================================================
-      5. CAROUSEL STATE
+      6. CAROUSEL STATE
       ============================================================
-      currentIndex tells us which slide is visible.
-      autoRotateMs controls timer speed.
     */
     let items = [];
     let currentIndex = 0;
     let autoRotateTimer = null;
-    const autoRotateMs = 5000;
+    const autoRotateMs = 4000;
 
-    /*
-      Cache important DOM nodes once.
-    */
     const viewport = document.getElementById('carouselViewport');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const statusText = document.getElementById('statusText');
     const dotRow = document.getElementById('dotRow');
+    const errorBox = document.getElementById('errorBox');
 
     /*
       ============================================================
-      6. RENDER THE CAROUSEL
+      7. RENDER THE CAROUSEL
       ============================================================
-      We create one slide per item, but only one has the 'active' class.
     */
     function renderCarousel() {
       viewport.innerHTML = '';
@@ -407,7 +457,7 @@
 
         const card = document.createElement('div');
         card.className = 'card';
-        card.style.backgroundImage = `url("${item.image}")`;
+        card.style.backgroundImage = `url("${item.backgroundImage}")`;
 
         const caption = document.createElement('div');
         caption.className = 'caption';
@@ -423,16 +473,13 @@
         const bodyText = document.createElement('div');
         bodyText.className = 'body-text';
 
-        const { shortText, isTruncated } = getTruncatedText(item.caption, 200);
+        const { shortText, isTruncated } = getTruncatedText(item.blurb, 200);
         bodyText.textContent = shortText;
 
         caption.appendChild(meta);
         caption.appendChild(title);
         caption.appendChild(bodyText);
 
-        /*
-          Only add the Show More button when the text is long enough.
-        */
         if (isTruncated) {
           const showMoreBtn = document.createElement('button');
           showMoreBtn.className = 'show-more-btn';
@@ -441,7 +488,7 @@
           let expanded = false;
           showMoreBtn.addEventListener('click', () => {
             expanded = !expanded;
-            bodyText.textContent = expanded ? item.caption : shortText;
+            bodyText.textContent = expanded ? item.blurb : shortText;
             showMoreBtn.textContent = expanded ? 'Show less' : 'Show more';
           });
 
@@ -452,9 +499,6 @@
         slide.appendChild(card);
         viewport.appendChild(slide);
 
-        /*
-          Build the dot indicators.
-        */
         const dot = document.createElement('div');
         dot.className = 'dot';
         if (index === currentIndex) dot.classList.add('active');
@@ -471,9 +515,8 @@
 
     /*
       ============================================================
-      7. UPDATE WHICH SLIDE IS VISIBLE
+      8. UPDATE WHICH SLIDE IS VISIBLE
       ============================================================
-      This is called when arrows, dots, or timer changes the index.
     */
     function updateVisibleSlide() {
       const slides = document.querySelectorAll('.slide');
@@ -501,12 +544,16 @@
 
     /*
       ============================================================
-      8. DATE FORMATTER
+      9. DATE FORMATTER
       ============================================================
-      Makes 2026-03-05 display more nicely.
     */
     function formatDate(dateString) {
       const date = new Date(dateString + 'T00:00:00');
+
+      if (Number.isNaN(date.getTime())) {
+        return dateString;
+      }
+
       return date.toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
@@ -516,7 +563,7 @@
 
     /*
       ============================================================
-      9. NAVIGATION HELPERS
+      10. NAVIGATION HELPERS
       ============================================================
     */
     function showNext() {
@@ -531,10 +578,8 @@
 
     /*
       ============================================================
-      10. AUTO-ROTATION
+      11. AUTO-ROTATION
       ============================================================
-      The widget advances every few seconds.
-      When the user clicks arrows or dots, we restart the timer so it feels natural.
     */
     function startAutoRotate() {
       stopAutoRotate();
@@ -558,7 +603,23 @@
 
     /*
       ============================================================
-      11. EVENT LISTENERS
+      12. ERROR DISPLAY
+      ============================================================
+    */
+    function showError(message) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = message;
+      statusText.textContent = 'Unable to load items.';
+    }
+
+    function clearError() {
+      errorBox.style.display = 'none';
+      errorBox.textContent = '';
+    }
+
+    /*
+      ============================================================
+      13. EVENT LISTENERS
       ============================================================
     */
     prevBtn.addEventListener('click', () => {
@@ -573,51 +634,77 @@
       restartAutoRotate();
     });
 
-    /*
-      Pause rotation while user hovers over the carousel.
-      This is optional, but usually improves usability.
-    */
     document.getElementById('carouselWidget').addEventListener('mouseenter', stopAutoRotate);
     document.getElementById('carouselWidget').addEventListener('mouseleave', startAutoRotate);
 
     /*
       ============================================================
-      12. INITIALIZE THE WIDGET
+      14. FETCH GOOGLE SHEET CSV
       ============================================================
-      Prototype flow:
-      1. Parse CSV
-      2. Sort newest first
-      3. Render
-      4. Start timer
+      This is the key change from the original version.
     */
-    function initWidget() {
-      const parsed = parseSimpleCsv(sampleCsv);
-      items = sortNewestFirst(parsed);
-      currentIndex = 0;
-      renderCarousel();
-      startAutoRotate();
+    async function fetchSheetData() {
+      const response = await fetch(GOOGLE_SHEET_CSV_URL, {
+        method: 'GET'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Fetch failed with status ${response.status}`);
+      }
+
+      const csvText = await response.text();
+      const rawItems = parseCsv(csvText);
+      const normalizedItems = normalizeItems(rawItems);
+
+      return sortNewestFirst(normalizedItems);
+    }
+
+    /*
+      ============================================================
+      15. INITIALIZE THE WIDGET
+      ============================================================
+    */
+    async function initWidget() {
+      clearError();
+      statusText.textContent = 'Loading items...';
+
+      try {
+        if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL.includes('PASTE_YOUR_PUBLISHED')) {
+          throw new Error('Add your published Google Sheet CSV URL to GOOGLE_SHEET_CSV_URL first.');
+        }
+
+        items = await fetchSheetData();
+
+        if (!items.length) {
+          throw new Error('No valid rows were found. Check your headers and make sure each row has date, title, blurb, and background image.');
+        }
+
+        currentIndex = 0;
+        renderCarousel();
+        startAutoRotate();
+      } catch (error) {
+        console.error(error);
+        showError(error.message);
+      }
     }
 
     initWidget();
 
     /*
       ============================================================
-      13. NEXT STEP: USING AN EXTERNAL CSV FILE
+      16. HOW TO PUBLISH GOOGLE SHEETS AS CSV
       ============================================================
-      When you are ready, replace initWidget() with something like:
+      1. Open your Google Sheet.
+      2. Put this exact header row in row 1:
+         date | title | blurb | background image
+      3. Go to File -> Share -> Publish to web.
+      4. Choose the correct sheet/tab.
+      5. Choose CSV.
+      6. Copy the published CSV URL.
+      7. Paste it into GOOGLE_SHEET_CSV_URL above.
 
-      async function initWidget() {
-        const response = await fetch('./data.csv');
-        const csvText = await response.text();
-        const parsed = parseSimpleCsv(csvText);
-        items = sortNewestFirst(parsed);
-        currentIndex = 0;
-        renderCarousel();
-        startAutoRotate();
-      }
-
-      Eventually, if the CSV comes from Google Sheets, you can publish a sheet
-      and fetch the CSV export URL instead.
+      Example row data:
+      2026-03-06,New Paper Accepted,"Our lab published a new paper on...",https://your-image-url.com/image.jpg
     */
   </script>
 </body>
