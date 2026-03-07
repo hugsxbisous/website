@@ -202,7 +202,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
 
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.15);
   color: white;
 
   border: none;
