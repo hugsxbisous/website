@@ -8,15 +8,12 @@ const dotRow = document.getElementById("dotRow");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const statusText = document.getElementById("statusText");
-const pageIntro = document.getElementById("pageIntro");
 
 function getQuery() {
   const p = new URLSearchParams(window.location.search);
 
   return {
     sheet: p.get("sheet") || "",
-    title: p.get("title") || "Embeddable Carousel Widget",
-    intro: p.get("intro") || ""
   };
 }
 
@@ -364,7 +361,6 @@ document.getElementById("carouselWidget").addEventListener("mouseenter", stopAut
 document.getElementById("carouselWidget").addEventListener("mouseleave", startAutoRotate);
 
 const cfg = getQuery();
-pageIntro.textContent = cfg.intro;
 
 if (cfg.sheet) {
   load(cfg.sheet);

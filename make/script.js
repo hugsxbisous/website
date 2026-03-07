@@ -80,8 +80,6 @@ function looksLikeGoogleSheetsCsv(url) {
 function buildWidgetUrl({ title, intro, sheet }) {
   const url = new URL(WIDGET_BASE_URL);
 
-  url.searchParams.set("title", title);
-  url.searchParams.set("intro", intro);
   url.searchParams.set("sheet", sheet);
 
   return url.toString();
