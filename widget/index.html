@@ -1,114 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Carousel Widget Generator</title>
-
-<link rel="stylesheet" href="styles.css">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Embeddable Carousel Widget</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
 <main class="page">
+  <section class="widget-shell">
+    <h2 id="pageHeading">Embeddable Carousel Widget</h2>
+    <p id="pageIntro" class="intro"></p>
 
-<section class="panel">
+    <div class="carousel" id="carouselWidget">
+      <div class="viewport" id="carouselViewport"></div>
 
-<h1>Embeddable Carousel Widget Generator</h1>
+      <div class="controls">
+        <div class="arrow-group">
+          <button class="arrow-btn" id="prevBtn" aria-label="Previous slide">←</button>
+          <button class="arrow-btn" id="nextBtn" aria-label="Next slide">→</button>
+        </div>
 
-<p class="intro">
-Create a carousel widget powered by a Google Sheet.
-Fill out the template sheet, publish it as CSV, paste the URL here,
-and generate embed code.
-</p>
-
-</section>
-
-
-<section class="panel">
-
-<h2>Create your widget</h2>
-
-<label>Widget heading</label>
-<input id="widgetTitleInput" type="text" value="Embeddable Carousel Widget">
-
-<label>Intro text</label>
-<textarea id="widgetIntroInput">Insert intro text here.</textarea>
-
-<label>Google Sheet CSV URL</label>
-<input id="sheetUrlInput" type="text" placeholder="Paste published CSV URL">
-
-
-<div class="button-row">
-
-<button id="copyTemplateBtn" class="btn secondary">
-Open template sheet
-</button>
-
-<button id="createWidgetBtn" class="btn">
-Create widget code
-</button>
-
-<button id="previewWidgetBtn" class="btn secondary">
-Preview
-</button>
-
-</div>
-
-
-<h3>Embed code</h3>
-
-<pre id="embedCodeOutput">
-Click create widget code.
-</pre>
-
-<button id="copyEmbedBtn" class="btn secondary">
-Copy embed code
-</button>
-
-</section>
-
-
-
-<section class="widget-shell">
-
-<h2 id="pageHeading">
-Embeddable Carousel Widget
-</h2>
-
-<p id="pageIntro" class="intro"></p>
-
-<div class="carousel" id="carouselWidget">
-
-<div class="viewport" id="carouselViewport"></div>
-
-<div class="controls">
-
-<div class="arrow-group">
-
-<button class="arrow-btn" id="prevBtn">←</button>
-<button class="arrow-btn" id="nextBtn">→</button>
-
-</div>
-
-<div class="status" id="statusText">
-Loading...
-</div>
-
-<div class="dot-row" id="dotRow"></div>
-
-</div>
-
-</div>
-
-</section>
-
+        <div class="status" id="statusText">Loading...</div>
+        <div class="dot-row" id="dotRow"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script src="script.js"></script>
-
 </body>
 </html>
