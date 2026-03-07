@@ -1,1015 +1,114 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Google Sheet Carousel Widget + Generator</title>
-  <style>
-    :root {
-      --page-bg: #f5f7fb;
-      --card-bg: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-      --radius: 20px;
-      --overlay: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.05) 80%);
-      --accent: #111827;
-      --accent-soft: #e5e7eb;
-      --success-bg: #ecfdf5;
-      --success-text: #065f46;
-      --error-bg: #fee2e2;
-      --error-text: #991b1b;
-    }
 
-    * { box-sizing: border-box; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--page-bg);
-      color: var(--text);
-      padding: 32px 16px 48px;
-    }
+<title>Carousel Widget Generator</title>
 
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      gap: 24px;
-    }
+<link rel="stylesheet" href="styles.css">
 
-    h1, h2, h3, p {
-      margin-top: 0;
-    }
-
-    h1 {
-      margin-bottom: 12px;
-      font-size: 2rem;
-    }
-
-    .intro {
-      color: var(--muted);
-      margin-bottom: 0;
-      max-width: 850px;
-      line-height: 1.5;
-    }
-
-    .panel {
-      background: var(--card-bg);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 20px;
-    }
-
-    .generator-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1.1fr 0.9fr;
-      align-items: start;
-    }
-
-    .stack {
-      display: grid;
-      gap: 12px;
-    }
-
-    label {
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #cbd5e1;
-      font: inherit;
-      background: white;
-      color: var(--text);
-    }
-
-    textarea {
-      min-height: 130px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .btn {
-      border: 0;
-      background: var(--accent);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .btn.secondary {
-      background: var(--accent-soft);
-      color: var(--text);
-    }
-
-    .btn:hover,
-    .arrow-btn:hover,
-    .show-more-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .small-note {
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.45;
-    }
-
-    .status-box,
-    .error-box,
-    .success-box {
-      margin-top: 12px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      display: none;
-      line-height: 1.45;
-    }
-
-    .error-box {
-      background: var(--error-bg);
-      color: var(--error-text);
-    }
-
-    .success-box {
-      background: var(--success-bg);
-      color: var(--success-text);
-    }
-
-    .widget-shell {
-      background: var(--card-bg);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 20px;
-    }
-
-    .carousel {
-      position: relative;
-      width: 100%;
-    }
-
-    .viewport {
-      position: relative;
-      min-height: 460px;
-      overflow: hidden;
-      border-radius: var(--radius);
-      background: #dbe3ef;
-    }
-
-    .slide {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.45s ease;
-      display: flex;
-      align-items: stretch;
-      justify-content: stretch;
-    }
-
-    .slide.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .card {
-      position: relative;
-      width: 100%;
-      min-height: 460px;
-      display: flex;
-      align-items: end;
-      overflow: hidden;
-      border-radius: var(--radius);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      isolation: isolate;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: var(--overlay);
-      z-index: 0;
-    }
-
-    .caption {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      color: white;
-      padding: 24px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .meta {
-      font-size: 0.92rem;
-      opacity: 0.92;
-      letter-spacing: 0.02em;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      line-height: 1.2;
-      max-width: 90%;
-    }
-
-    .body-text {
-      font-size: 1rem;
-      line-height: 1.5;
-      max-width: 800px;
-      white-space: normal;
-    }
-
-    .show-more-btn {
-      width: fit-content;
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-weight: 700;
-      background: rgba(255,255,255,0.92);
-      color: #111827;
-    }
-
-    .controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
-
-    .arrow-group {
-      display: flex;
-      gap: 10px;
-    }
-
-    .arrow-btn {
-      border: 0;
-      background: #111827;
-      color: white;
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-
-    .status {
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .dot-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #cbd5e1;
-      cursor: pointer;
-    }
-
-    .dot.active {
-      background: #111827;
-      transform: scale(1.15);
-    }
-
-    code,
-    pre {
-      background: rgba(15, 23, 42, 0.08);
-      border-radius: 10px;
-    }
-
-    code {
-      padding: 2px 6px;
-    }
-
-    pre {
-      padding: 14px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .steps {
-      display: grid;
-      gap: 10px;
-      color: #334155;
-      line-height: 1.5;
-    }
-
-    .steps strong {
-      color: #0f172a;
-    }
-
-    @media (max-width: 900px) {
-      .generator-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 680px) {
-      .viewport,
-      .card {
-        min-height: 380px;
-      }
-
-      .title {
-        font-size: 1.25rem;
-        max-width: 100%;
-      }
-
-      .caption {
-        padding: 18px;
-      }
-    }
-  </style>
 </head>
+
 <body>
-  <main class="page">
-    <section class="panel">
-      <h1>Embeddable Carousel Widget Generator</h1>
-      <p class="intro">
-        This page does two jobs. It previews the carousel widget and also helps someone generate the embed code for their own copy. They create a copy of the Google Sheet template, publish that sheet as CSV, paste the CSV URL here, and this page produces the iframe code they can place elsewhere.
-      </p>
-    </section>
-
-    <section class="panel">
-      <h2>Create your widget</h2>
-      <div class="generator-grid">
-        <div class="stack">
-          <div>
-            <label for="widgetTitleInput">Widget heading</label>
-            <input id="widgetTitleInput" type="text" value="Embeddable Carousel Widget Prototype" />
-          </div>
-
-          <div>
-            <label for="widgetIntroInput">Introductory blurb</label>
-            <textarea id="widgetIntroInput">[insert news introductory blurb here about the lab]</textarea>
-          </div>
-
-          <div>
-            <label for="sheetUrlInput">Published Google Sheet CSV URL</label>
-            <input id="sheetUrlInput" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv&gid=0" />
-          </div>
-
-          <div class="button-row">
-            <button class="btn secondary" id="copyTemplateBtn">1. Open template sheet</button>
-            <button class="btn" id="createWidgetBtn">2. Create widget code</button>
-            <button class="btn secondary" id="previewWidgetBtn">Preview with this sheet</button>
-          </div>
-
-          <div class="small-note">
-            The template sheet should have these exact headers in row 1: <code>date</code>, <code>title</code>, <code>blurb</code>, <code>background image</code>.
-            The user still needs to use Google Sheets <code>File → Share → Publish to web</code> and choose <code>CSV</code> before the widget can load the data.
-          </div>
-
-          <div class="success-box" id="successBox"></div>
-          <div class="error-box" id="generatorErrorBox"></div>
-        </div>
-
-        <div class="stack">
-          <h3>Generated embed code</h3>
-          <pre id="embedCodeOutput">Click “Create widget code” to generate the iframe snippet.</pre>
-          <div class="button-row">
-            <button class="btn secondary" id="copyEmbedBtn">Copy embed code</button>
-            <button class="btn secondary" id="openPreviewLinkBtn">Open preview link</button>
-          </div>
-          <div class="small-note">
-            The generated code uses query parameters, so one widget page can power many different widgets without duplicating the file.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="widget-shell">
-      <h2 id="pageHeading">Embeddable Carousel Widget Prototype</h2>
-      <p class="intro" id="pageIntro">[insert news introductory blurb here about the lab]</p>
-
-      <div class="carousel" id="carouselWidget">
-        <div class="viewport" id="carouselViewport" aria-live="polite"></div>
-
-        <div class="controls">
-          <div class="arrow-group">
-            <button class="arrow-btn" id="prevBtn" aria-label="Previous slide">&#8592;</button>
-            <button class="arrow-btn" id="nextBtn" aria-label="Next slide">&#8594;</button>
-          </div>
-
-          <div class="status" id="statusText">Loading items...</div>
-
-          <div class="dot-row" id="dotRow" aria-label="Slide indicators"></div>
-        </div>
-      </div>
-
-      <div class="error-box" id="widgetErrorBox"></div>
-    </section>
-
-    <section class="panel">
-      <h2>How this flow works</h2>
-      <div class="steps">
-        <div><strong>Step 1.</strong> Click <code>Open template sheet</code> and make a Google Sheets copy.</div>
-        <div><strong>Step 2.</strong> Fill in rows using <code>date</code>, <code>title</code>, <code>blurb</code>, and <code>background image</code>.</div>
-        <div><strong>Step 3.</strong> Publish that sheet to the web as CSV.</div>
-        <div><strong>Step 4.</strong> Paste the published CSV URL into this page and click <code>Create widget code</code>.</div>
-        <div><strong>Step 5.</strong> Copy the generated iframe embed code into any site that supports embedded iframes.</div>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    /*
-      ============================================================
-      1. CONFIGURATION
-      ============================================================
-      TEMPLATE_COPY_URL:
-      - Put the share link for your Google Sheet template here.
-      - Best practice is to set the sheet to allow viewers to make a copy.
-
-      DEFAULT_SHEET_CSV_URL:
-      - Optional fallback sheet for previewing this page when no query string
-        or generator input is provided yet.
-
-      WIDGET_PAGE_URL:
-      - The public URL of this widget page after GitHub Pages is live.
-      - This is used to generate the iframe embed code.
-      - If left blank, the script tries to use the current page URL.
-    */
-    const TEMPLATE_COPY_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTnUiGhyQqofnf5mO6QdGU28VQRhqiXMXVtGfiD5Fy0LkqVyGinHslpw-vN8rcB6ugnIeMVJJT3gn-A/pub?output=csv';
-    const DEFAULT_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTnUiGhyQqofnf5mO6QdGU28VQRhqiXMXVtGfiD5Fy0LkqVyGinHslpw-vN8rcB6ugnIeMVJJT3gn-A/pub?output=csv';
-    const WIDGET_PAGE_URL = '';
-
-    /*
-      ============================================================
-      2. DOM REFERENCES
-      ============================================================
-    */
-    const pageHeading = document.getElementById('pageHeading');
-    const pageIntro = document.getElementById('pageIntro');
-    const widgetTitleInput = document.getElementById('widgetTitleInput');
-    const widgetIntroInput = document.getElementById('widgetIntroInput');
-    const sheetUrlInput = document.getElementById('sheetUrlInput');
-    const createWidgetBtn = document.getElementById('createWidgetBtn');
-    const copyTemplateBtn = document.getElementById('copyTemplateBtn');
-    const previewWidgetBtn = document.getElementById('previewWidgetBtn');
-    const embedCodeOutput = document.getElementById('embedCodeOutput');
-    const copyEmbedBtn = document.getElementById('copyEmbedBtn');
-    const openPreviewLinkBtn = document.getElementById('openPreviewLinkBtn');
-    const successBox = document.getElementById('successBox');
-    const generatorErrorBox = document.getElementById('generatorErrorBox');
-
-    const viewport = document.getElementById('carouselViewport');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const statusText = document.getElementById('statusText');
-    const dotRow = document.getElementById('dotRow');
-    const widgetErrorBox = document.getElementById('widgetErrorBox');
-
-    /*
-      ============================================================
-      3. QUERY PARAMETER HELPERS
-      ============================================================
-      We let the widget configure itself from the page URL.
-      That is what makes a reusable one-file embed possible.
-
-      Example:
-      widget.html?sheet=...&title=...&intro=...
-    */
-    function getConfigFromQuery() {
-      const params = new URLSearchParams(window.location.search);
-
-      return {
-        sheetUrl: params.get('sheet') || DEFAULT_SHEET_CSV_URL,
-        title: params.get('title') || 'Embeddable Carousel Widget Prototype',
-        intro: params.get('intro') || '[insert news introductory blurb here about the lab]'
-      };
-    }
-
-    function updatePageText(title, intro) {
-      pageHeading.textContent = title;
-      pageIntro.textContent = intro;
-      widgetTitleInput.value = title;
-      widgetIntroInput.value = intro;
-    }
-
-    /*
-      ============================================================
-      4. CSV PARSER
-      ============================================================
-      Handles quoted commas and quoted line breaks.
-    */
-    function parseCsv(csvText) {
-      const rows = [];
-      let currentRow = [];
-      let currentValue = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < csvText.length; i++) {
-        const char = csvText[i];
-        const nextChar = csvText[i + 1];
-
-        if (char === '"') {
-          if (inQuotes && nextChar === '"') {
-            currentValue += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (char === ',' && !inQuotes) {
-          currentRow.push(currentValue);
-          currentValue = '';
-        } else if ((char === '\n' || char === '\r') && !inQuotes) {
-          if (char === '\r' && nextChar === '\n') {
-            i++;
-          }
-
-          currentRow.push(currentValue);
-          currentValue = '';
-
-          if (currentRow.some(cell => cell.trim() !== '')) {
-            rows.push(currentRow);
-          }
-
-          currentRow = [];
-        } else {
-          currentValue += char;
-        }
-      }
-
-      if (currentValue.length > 0 || currentRow.length > 0) {
-        currentRow.push(currentValue);
-        if (currentRow.some(cell => cell.trim() !== '')) {
-          rows.push(currentRow);
-        }
-      }
-
-      if (!rows.length) return [];
-
-      const headers = rows[0].map(header => header.trim().toLowerCase());
-
-      return rows.slice(1).map(row => {
-        const item = {};
-        headers.forEach((header, index) => {
-          item[header] = (row[index] || '').trim();
-        });
-        return item;
-      });
-    }
-
-    function normalizeItems(rawItems) {
-      return rawItems
-        .map(item => ({
-          date: item['date'] || '',
-          title: item['title'] || '',
-          blurb: item['blurb'] || '',
-          backgroundImage: item['background image'] || ''
-        }))
-        .filter(item => item.date && item.title && item.blurb && item.backgroundImage);
-    }
-
-    function sortNewestFirst(items) {
-      return [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
-    }
-
-    function getTruncatedText(text, maxChars = 200) {
-      if (text.length <= maxChars) {
-        return { shortText: text, isTruncated: false };
-      }
-      return {
-        shortText: text.slice(0, maxChars).trim() + '...',
-        isTruncated: true
-      };
-    }
-
-    function formatDate(dateString) {
-      const date = new Date(dateString + 'T00:00:00');
-      if (Number.isNaN(date.getTime())) return dateString;
-      return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-
-    /*
-      ============================================================
-      5. CAROUSEL STATE
-      ============================================================
-    */
-    let items = [];
-    let currentIndex = 0;
-    let autoRotateTimer = null;
-    const autoRotateMs = 4000;
-    let currentPreviewUrl = '';
-
-    function renderCarousel() {
-      viewport.innerHTML = '';
-      dotRow.innerHTML = '';
-
-      items.forEach((item, index) => {
-        const slide = document.createElement('article');
-        slide.className = 'slide';
-        if (index === currentIndex) slide.classList.add('active');
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.backgroundImage = `url("${item.backgroundImage}")`;
-
-        const caption = document.createElement('div');
-        caption.className = 'caption';
-
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-        meta.textContent = formatDate(item.date);
-
-        const title = document.createElement('div');
-        title.className = 'title';
-        title.textContent = item.title;
-
-        const bodyText = document.createElement('div');
-        bodyText.className = 'body-text';
-        const { shortText, isTruncated } = getTruncatedText(item.blurb, 200);
-        bodyText.textContent = shortText;
-
-        caption.appendChild(meta);
-        caption.appendChild(title);
-        caption.appendChild(bodyText);
-
-        if (isTruncated) {
-          const showMoreBtn = document.createElement('button');
-          showMoreBtn.className = 'show-more-btn';
-          showMoreBtn.textContent = 'Show more';
-          let expanded = false;
-
-          showMoreBtn.addEventListener('click', () => {
-            expanded = !expanded;
-            bodyText.textContent = expanded ? item.blurb : shortText;
-            showMoreBtn.textContent = expanded ? 'Show less' : 'Show more';
-          });
-
-          caption.appendChild(showMoreBtn);
-        }
-
-        card.appendChild(caption);
-        slide.appendChild(card);
-        viewport.appendChild(slide);
-
-        const dot = document.createElement('div');
-        dot.className = 'dot';
-        if (index === currentIndex) dot.classList.add('active');
-        dot.addEventListener('click', () => {
-          currentIndex = index;
-          updateVisibleSlide();
-          restartAutoRotate();
-        });
-        dotRow.appendChild(dot);
-      });
-
-      updateStatusText();
-    }
-
-    function updateVisibleSlide() {
-      const slides = document.querySelectorAll('.slide');
-      const dots = document.querySelectorAll('.dot');
-
-      slides.forEach((slide, index) => {
-        slide.classList.toggle('active', index === currentIndex);
-      });
-
-      dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentIndex);
-      });
-
-      updateStatusText();
-    }
-
-    function updateStatusText() {
-      if (!items.length) {
-        statusText.textContent = 'No items loaded.';
-        return;
-      }
-      statusText.textContent = `Showing ${currentIndex + 1} of ${items.length} · newest first`;
-    }
-
-    function showNext() {
-      currentIndex = (currentIndex + 1) % items.length;
-      updateVisibleSlide();
-    }
-
-    function showPrev() {
-      currentIndex = (currentIndex - 1 + items.length) % items.length;
-      updateVisibleSlide();
-    }
-
-    function startAutoRotate() {
-      stopAutoRotate();
-      autoRotateTimer = setInterval(() => {
-        if (items.length > 1) showNext();
-      }, autoRotateMs);
-    }
-
-    function stopAutoRotate() {
-      if (autoRotateTimer) {
-        clearInterval(autoRotateTimer);
-        autoRotateTimer = null;
-      }
-    }
-
-    function restartAutoRotate() {
-      startAutoRotate();
-    }
-
-    function showWidgetError(message) {
-      widgetErrorBox.style.display = 'block';
-      widgetErrorBox.textContent = message;
-      statusText.textContent = 'Unable to load items.';
-    }
-
-    function clearWidgetError() {
-      widgetErrorBox.style.display = 'none';
-      widgetErrorBox.textContent = '';
-    }
-
-    function showGeneratorError(message) {
-      generatorErrorBox.style.display = 'block';
-      generatorErrorBox.textContent = message;
-    }
-
-    function clearGeneratorError() {
-      generatorErrorBox.style.display = 'none';
-      generatorErrorBox.textContent = '';
-    }
-
-    function showSuccess(message) {
-      successBox.style.display = 'block';
-      successBox.textContent = message;
-    }
-
-    function clearSuccess() {
-      successBox.style.display = 'none';
-      successBox.textContent = '';
-    }
-
-    async function fetchSheetData(sheetUrl) {
-      const response = await fetch(sheetUrl, { method: 'GET' });
-      if (!response.ok) {
-        throw new Error(`Fetch failed with status ${response.status}`);
-      }
-
-      const csvText = await response.text();
-      const rawItems = parseCsv(csvText);
-      const normalizedItems = normalizeItems(rawItems);
-      return sortNewestFirst(normalizedItems);
-    }
-
-    /*
-      ============================================================
-      6. WIDGET URL GENERATION
-      ============================================================
-      The embed works by pointing at this same page with query params.
-      In production you may later want to separate preview/generator and widget
-      into different files. For now, one page can do both.
-    */
-    function getBaseWidgetUrl() {
-      if (WIDGET_PAGE_URL.trim()) {
-        return WIDGET_PAGE_URL.trim();
-      }
-      return window.location.origin + window.location.pathname;
-    }
-
-    function buildWidgetUrl({ title, intro, sheetUrl }) {
-      const url = new URL(getBaseWidgetUrl());
-      url.searchParams.set('title', title);
-      url.searchParams.set('intro', intro);
-      url.searchParams.set('sheet', sheetUrl);
-      return url.toString();
-    }
-
-    function buildEmbedCode(previewUrl) {
-      return `<iframe\n  src="${previewUrl}"\n  width="100%"\n  height="720"\n  style="border:0; max-width:1100px;"\n  loading="lazy"\n  referrerpolicy="no-referrer-when-downgrade"\n  title="Carousel Widget">\n</iframe>`;
-    }
-
-    function looksLikeGoogleSheetsCsv(url) {
-      return url.includes('docs.google.com/spreadsheets') &&
-             (url.includes('output=csv') || url.includes('format=csv') || url.includes('/export?'));
-    }
-
-    async function loadWidgetFromConfig(config) {
-      clearWidgetError();
-      updatePageText(config.title, config.intro);
-      sheetUrlInput.value = config.sheetUrl || '';
-      statusText.textContent = 'Loading items...';
-
-      try {
-        if (!config.sheetUrl) {
-          throw new Error('Add a published Google Sheet CSV URL to preview the widget.');
-        }
-
-        items = await fetchSheetData(config.sheetUrl);
-
-        if (!items.length) {
-          throw new Error('No valid rows were found. Check your headers and make sure each row has date, title, blurb, and background image.');
-        }
-
-        currentIndex = 0;
-        renderCarousel();
-        startAutoRotate();
-      } catch (error) {
-        console.error(error);
-        items = [];
-        viewport.innerHTML = '';
-        dotRow.innerHTML = '';
-        showWidgetError(error.message);
-      }
-    }
-
-    /*
-      ============================================================
-      7. GENERATOR ACTIONS
-      ============================================================
-    */
-    copyTemplateBtn.addEventListener('click', () => {
-      clearGeneratorError();
-      clearSuccess();
-
-      if (!TEMPLATE_COPY_URL || TEMPLATE_COPY_URL.includes('PASTE_YOUR')) {
-        showGeneratorError('Add your Google Sheet template share link to TEMPLATE_COPY_URL first.');
-        return;
-      }
-
-      window.open(TEMPLATE_COPY_URL, '_blank', 'noopener,noreferrer');
-      showSuccess('Template sheet opened in a new tab. Make a copy, fill it out, publish it as CSV, then paste the published CSV URL here.');
-    });
-
-    createWidgetBtn.addEventListener('click', async () => {
-      clearGeneratorError();
-      clearSuccess();
-
-      const title = widgetTitleInput.value.trim() || 'Embeddable Carousel Widget Prototype';
-      const intro = widgetIntroInput.value.trim() || '[insert news introductory blurb here about the lab]';
-      const sheetUrl = sheetUrlInput.value.trim();
-
-      if (!sheetUrl) {
-        showGeneratorError('Paste a published Google Sheet CSV URL first.');
-        return;
-      }
-
-      if (!looksLikeGoogleSheetsCsv(sheetUrl)) {
-        showGeneratorError('That URL does not look like a published Google Sheets CSV link. Use the CSV publish/export URL.');
-        return;
-      }
-
-      try {
-        const previewUrl = buildWidgetUrl({ title, intro, sheetUrl });
-        currentPreviewUrl = previewUrl;
-        embedCodeOutput.textContent = buildEmbedCode(previewUrl);
-        showSuccess('Embed code generated below. The preview on this page is also being updated with that same sheet.');
-        await loadWidgetFromConfig({ title, intro, sheetUrl });
-      } catch (error) {
-        console.error(error);
-        showGeneratorError(error.message);
-      }
-    });
-
-    previewWidgetBtn.addEventListener('click', async () => {
-      clearGeneratorError();
-      clearSuccess();
-
-      const title = widgetTitleInput.value.trim() || 'Embeddable Carousel Widget Prototype';
-      const intro = widgetIntroInput.value.trim() || '[insert news introductory blurb here about the lab]';
-      const sheetUrl = sheetUrlInput.value.trim();
-
-      if (!sheetUrl) {
-        showGeneratorError('Paste a published Google Sheet CSV URL first.');
-        return;
-      }
-
-      await loadWidgetFromConfig({ title, intro, sheetUrl });
-      currentPreviewUrl = buildWidgetUrl({ title, intro, sheetUrl });
-      showSuccess('Preview updated.');
-    });
-
-    copyEmbedBtn.addEventListener('click', async () => {
-      clearGeneratorError();
-      clearSuccess();
-
-      const text = embedCodeOutput.textContent.trim();
-      if (!text || text.startsWith('Click “Create widget code”')) {
-        showGeneratorError('Generate the embed code first.');
-        return;
-      }
-
-      try {
-        await navigator.clipboard.writeText(text);
-        showSuccess('Embed code copied to clipboard.');
-      } catch (error) {
-        console.error(error);
-        showGeneratorError('Could not copy automatically. You can still copy the code manually from the box.');
-      }
-    });
-
-    openPreviewLinkBtn.addEventListener('click', () => {
-      clearGeneratorError();
-      clearSuccess();
-
-      if (!currentPreviewUrl) {
-        showGeneratorError('Generate widget code first so there is a preview link to open.');
-        return;
-      }
-
-      window.open(currentPreviewUrl, '_blank', 'noopener,noreferrer');
-    });
-
-    /*
-      ============================================================
-      8. CAROUSEL EVENT LISTENERS
-      ============================================================
-    */
-    prevBtn.addEventListener('click', () => {
-      if (!items.length) return;
-      showPrev();
-      restartAutoRotate();
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (!items.length) return;
-      showNext();
-      restartAutoRotate();
-    });
-
-    document.getElementById('carouselWidget').addEventListener('mouseenter', stopAutoRotate);
-    document.getElementById('carouselWidget').addEventListener('mouseleave', startAutoRotate);
-
-    /*
-      ============================================================
-      9. INITIALIZE
-      ============================================================
-      On page load, read any query params already present and use those to
-      configure the page. This is what lets the embed work.
-    */
-    async function initPage() {
-      const config = getConfigFromQuery();
-      updatePageText(config.title, config.intro);
-      currentPreviewUrl = config.sheetUrl ? buildWidgetUrl(config) : '';
-      await loadWidgetFromConfig(config);
-    }
-
-    initPage();
-
-    /*
-      ============================================================
-      10. IMPORTANT SETUP NOTES
-      ============================================================
-      Before publishing this page, update these values:
-
-      1. TEMPLATE_COPY_URL
-         Example:
-         https://docs.google.com/spreadsheets/d/ABC123/edit?usp=sharing
-
-      2. WIDGET_PAGE_URL
-         Example once on GitHub Pages:
-         https://your-username.github.io/your-repo/website/widget/index.html
-
-      3. DEFAULT_SHEET_CSV_URL
-         Optional. Can be left blank if you do not want a default demo.
-
-      Template headers must be exactly:
-      - date
-      - title
-      - blurb
-      - background image
-
-      This version generates iframe embed code. It does not automatically create
-      a Google Sheets copy through the Google API. Instead it opens your template
-      sheet so the user can make a copy from Google Sheets itself, which is the
-      simplest approach for a static GitHub Pages site.
-    */
-  </script>
+
+<main class="page">
+
+<section class="panel">
+
+<h1>Embeddable Carousel Widget Generator</h1>
+
+<p class="intro">
+Create a carousel widget powered by a Google Sheet.
+Fill out the template sheet, publish it as CSV, paste the URL here,
+and generate embed code.
+</p>
+
+</section>
+
+
+<section class="panel">
+
+<h2>Create your widget</h2>
+
+<label>Widget heading</label>
+<input id="widgetTitleInput" type="text" value="Embeddable Carousel Widget">
+
+<label>Intro text</label>
+<textarea id="widgetIntroInput">Insert intro text here.</textarea>
+
+<label>Google Sheet CSV URL</label>
+<input id="sheetUrlInput" type="text" placeholder="Paste published CSV URL">
+
+
+<div class="button-row">
+
+<button id="copyTemplateBtn" class="btn secondary">
+Open template sheet
+</button>
+
+<button id="createWidgetBtn" class="btn">
+Create widget code
+</button>
+
+<button id="previewWidgetBtn" class="btn secondary">
+Preview
+</button>
+
+</div>
+
+
+<h3>Embed code</h3>
+
+<pre id="embedCodeOutput">
+Click create widget code.
+</pre>
+
+<button id="copyEmbedBtn" class="btn secondary">
+Copy embed code
+</button>
+
+</section>
+
+
+
+<section class="widget-shell">
+
+<h2 id="pageHeading">
+Embeddable Carousel Widget
+</h2>
+
+<p id="pageIntro" class="intro"></p>
+
+<div class="carousel" id="carouselWidget">
+
+<div class="viewport" id="carouselViewport"></div>
+
+<div class="controls">
+
+<div class="arrow-group">
+
+<button class="arrow-btn" id="prevBtn">←</button>
+<button class="arrow-btn" id="nextBtn">→</button>
+
+</div>
+
+<div class="status" id="statusText">
+Loading...
+</div>
+
+<div class="dot-row" id="dotRow"></div>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<script src="script.js"></script>
+
 </body>
 </html>
