@@ -131,7 +131,7 @@ function formatDate(dateString) {
   });
 }
 
-function getTruncatedText(text, maxChars = 200) {
+function getTruncatedText(text, maxChars = 300) {
   if (text.length <= maxChars) {
     return { shortText: text, isTruncated: false };
   }
@@ -226,7 +226,7 @@ function render() {
     const bodyText = document.createElement("div");
     bodyText.className = "body-text";
 
-    const { shortText, isTruncated } = getTruncatedText(item.blurb, 200);
+    const { shortText, isTruncated } = getTruncatedText(item.blurb, 300);
     bodyText.innerHTML = linkifyText(shortText);
 
     caption.appendChild(meta);
