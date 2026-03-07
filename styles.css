@@ -1,0 +1,17 @@
+.btn {
+
+display:inline-block;
+padding:12px 18px;
+background:#111827;
+color:white;
+border-radius:999px;
+text-decoration:none;
+font-weight:600;
+
+}
+
+.btn:hover {
+
+opacity:0.9;
+
+}
