@@ -7,27 +7,15 @@ const viewport = document.getElementById("carouselViewport");
 const dotRow = document.getElementById("dotRow");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
-const statusText = document.getElementById("statusText");
 
 function getQuery() {
   const p = new URLSearchParams(window.location.search);
 
   return {
-    sheet: p.get("sheet") || "",
+    sheet: p.get("sheet") || ""
   };
 }
 
-/*
-  Robust CSV parser.
-
-  Handles:
-  - commas inside quoted fields
-  - line breaks inside quoted fields
-  - escaped quotes ("")
-  - normal unquoted cells
-
-  This is much safer for Google Sheets CSV exports.
-*/
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -86,20 +74,6 @@ function parseCSV(text) {
   });
 }
 
-/*
-  Normalize the parsed rows.
-
-  Required columns:
-  - date
-  - title
-  - blurb
-  - background image
-
-  Optional column:
-  - link
-
-  If link is present, the title becomes clickable.
-*/
 function normalize(data) {
   return data
     .map(r => ({
@@ -127,7 +101,7 @@ function formatDate(dateString) {
   });
 }
 
-function getTruncatedText(text, maxChars = 300) {
+function getTruncatedText(text, maxChars = 200) {
   if (text.length <= maxChars) {
     return { shortText: text, isTruncated: false };
   }
@@ -138,35 +112,13 @@ function getTruncatedText(text, maxChars = 300) {
   };
 }
 
-/*
-  Escape text before inserting into HTML.
-  This prevents accidental HTML injection.
-*/
 function escapeHtml(text) {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/>/g, "&gt;");
 }
 
-/*
-  Convert plain URLs and markdown links in text into clickable links.
-
-  Supported:
-  1. Plain URLs
-     Example:
-     https://example.com/paper
-
-  2. Markdown links
-     Example:
-     [Read the paper](https://example.com/paper)
-
-  Important limitation:
-  Google Sheets rich hyperlinks are not preserved in CSV metadata.
-  So use plain URLs, markdown links, or an optional separate 'link' column.
-*/
 function linkifyText(text) {
   let safe = escapeHtml(text);
 
@@ -212,8 +164,6 @@ function render() {
       titleLink.target = "_blank";
       titleLink.rel = "noopener noreferrer";
       titleLink.textContent = item.title;
-      titleLink.style.color = "white";
-      titleLink.style.textDecoration = "underline";
       title.appendChild(titleLink);
     } else {
       title.textContent = item.title;
@@ -222,7 +172,7 @@ function render() {
     const bodyText = document.createElement("div");
     bodyText.className = "body-text";
 
-    const { shortText, isTruncated } = getTruncatedText(item.blurb, 300);
+    const { shortText, isTruncated } = getTruncatedText(item.blurb, 200);
     bodyText.innerHTML = linkifyText(shortText);
 
     caption.appendChild(meta);
@@ -263,8 +213,6 @@ function render() {
 
     dotRow.appendChild(dot);
   });
-
-  updateStatus();
 }
 
 function update() {
@@ -273,17 +221,6 @@ function update() {
 
   slides.forEach((s, i) => s.classList.toggle("active", i === currentIndex));
   dots.forEach((d, i) => d.classList.toggle("active", i === currentIndex));
-
-  updateStatus();
-}
-
-function updateStatus() {
-  if (!items.length) {
-    statusText.textContent = "No items loaded.";
-    return;
-  }
-
-  statusText.textContent = `Showing ${currentIndex + 1} of ${items.length} · newest first`;
 }
 
 function showPrev() {
@@ -315,33 +252,22 @@ function restartAutoRotate() {
 }
 
 async function load(sheetUrl) {
-  if (!sheetUrl) {
-    statusText.textContent = "Missing sheet URL.";
-    return;
-  }
+  if (!sheetUrl) return;
 
   try {
     const res = await fetch(sheetUrl);
-
-    if (!res.ok) {
-      statusText.textContent = "Failed to load data.";
-      return;
-    }
+    if (!res.ok) return;
 
     const text = await res.text();
     items = sortItems(normalize(parseCSV(text)));
     currentIndex = 0;
 
-    if (!items.length) {
-      statusText.textContent = "No valid rows found.";
-      return;
-    }
+    if (!items.length) return;
 
     render();
     startAutoRotate();
   } catch (error) {
     console.error(error);
-    statusText.textContent = "Error loading widget data.";
   }
 }
 
@@ -361,9 +287,6 @@ document.getElementById("carouselWidget").addEventListener("mouseenter", stopAut
 document.getElementById("carouselWidget").addEventListener("mouseleave", startAutoRotate);
 
 const cfg = getQuery();
-
 if (cfg.sheet) {
   load(cfg.sheet);
-} else {
-  statusText.textContent = "No sheet URL provided.";
 }
