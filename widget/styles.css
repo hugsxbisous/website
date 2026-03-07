@@ -177,3 +177,13 @@ body {
     padding: 18px;
   }
 }
+
+.body-text a {
+  color: white;
+  text-decoration: underline;
+}
+
+.title a {
+  color: white;
+  text-decoration: underline;
+}

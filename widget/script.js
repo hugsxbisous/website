@@ -21,44 +21,59 @@ function getQuery() {
   };
 }
 
+/*
+  Robust CSV parser.
+
+  Handles:
+  - commas inside quoted fields
+  - line breaks inside quoted fields
+  - escaped quotes ("")
+  - normal unquoted cells
+
+  This is much safer for Google Sheets CSV exports.
+*/
 function parseCSV(text) {
   const rows = [];
-  let currentRow = [];
-  let currentValue = "";
+  let row = [];
+  let cell = "";
   let inQuotes = false;
 
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
-    const nextChar = text[i + 1];
+    const next = text[i + 1];
 
     if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        currentValue += '"';
+      if (inQuotes && next === '"') {
+        cell += '"';
         i++;
       } else {
         inQuotes = !inQuotes;
       }
     } else if (char === "," && !inQuotes) {
-      currentRow.push(currentValue);
-      currentValue = "";
+      row.push(cell);
+      cell = "";
     } else if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (char === "\r" && nextChar === "\n") i++;
-      currentRow.push(currentValue);
-      currentValue = "";
-
-      if (currentRow.some(cell => cell.trim() !== "")) {
-        rows.push(currentRow);
+      if (char === "\r" && next === "\n") {
+        i++;
       }
-      currentRow = [];
+
+      row.push(cell);
+      cell = "";
+
+      if (row.some(value => value.trim() !== "")) {
+        rows.push(row);
+      }
+
+      row = [];
     } else {
-      currentValue += char;
+      cell += char;
     }
   }
 
-  if (currentValue.length > 0 || currentRow.length > 0) {
-    currentRow.push(currentValue);
-    if (currentRow.some(cell => cell.trim() !== "")) {
-      rows.push(currentRow);
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    if (row.some(value => value.trim() !== "")) {
+      rows.push(row);
     }
   }
 
@@ -66,22 +81,37 @@ function parseCSV(text) {
 
   const headers = rows[0].map(h => h.trim().toLowerCase());
 
-  return rows.slice(1).map(row => {
+  return rows.slice(1).map(values => {
     const obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = (row[i] || "").trim();
+    headers.forEach((header, index) => {
+      obj[header] = (values[index] || "").trim();
     });
     return obj;
   });
 }
 
+/*
+  Normalize the parsed rows.
+
+  Required columns:
+  - date
+  - title
+  - blurb
+  - background image
+
+  Optional column:
+  - link
+
+  If link is present, the title becomes clickable.
+*/
 function normalize(data) {
   return data
     .map(r => ({
       date: r["date"] || "",
       title: r["title"] || "",
       blurb: r["blurb"] || "",
-      image: r["background image"] || ""
+      image: r["background image"] || "",
+      link: r["link"] || ""
     }))
     .filter(item => item.date && item.title && item.blurb && item.image);
 }
@@ -112,6 +142,51 @@ function getTruncatedText(text, maxChars = 200) {
   };
 }
 
+/*
+  Escape text before inserting into HTML.
+  This prevents accidental HTML injection.
+*/
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/*
+  Convert plain URLs and markdown links in text into clickable links.
+
+  Supported:
+  1. Plain URLs
+     Example:
+     https://example.com/paper
+
+  2. Markdown links
+     Example:
+     [Read the paper](https://example.com/paper)
+
+  Important limitation:
+  Google Sheets rich hyperlinks are not preserved in CSV metadata.
+  So use plain URLs, markdown links, or an optional separate 'link' column.
+*/
+function linkifyText(text) {
+  let safe = escapeHtml(text);
+
+  safe = safe.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
+  safe = safe.replace(
+    /(^|[\s(])(https?:\/\/[^\s<]+)/g,
+    '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>'
+  );
+
+  return safe.replace(/\n/g, "<br>");
+}
+
 function render() {
   viewport.innerHTML = "";
   dotRow.innerHTML = "";
@@ -134,13 +209,25 @@ function render() {
 
     const title = document.createElement("div");
     title.className = "title";
-    title.textContent = item.title;
+
+    if (item.link) {
+      const titleLink = document.createElement("a");
+      titleLink.href = item.link;
+      titleLink.target = "_blank";
+      titleLink.rel = "noopener noreferrer";
+      titleLink.textContent = item.title;
+      titleLink.style.color = "white";
+      titleLink.style.textDecoration = "underline";
+      title.appendChild(titleLink);
+    } else {
+      title.textContent = item.title;
+    }
 
     const bodyText = document.createElement("div");
     bodyText.className = "body-text";
 
     const { shortText, isTruncated } = getTruncatedText(item.blurb, 200);
-    bodyText.textContent = shortText;
+    bodyText.innerHTML = linkifyText(shortText);
 
     caption.appendChild(meta);
     caption.appendChild(title);
@@ -152,9 +239,12 @@ function render() {
       btn.textContent = "Show more";
 
       let expanded = false;
+
       btn.onclick = () => {
         expanded = !expanded;
-        bodyText.textContent = expanded ? item.blurb : shortText;
+        bodyText.innerHTML = expanded
+          ? linkifyText(item.blurb)
+          : linkifyText(shortText);
         btn.textContent = expanded ? "Show less" : "Show more";
       };
 
@@ -234,17 +324,29 @@ async function load(sheetUrl) {
     return;
   }
 
-  const res = await fetch(sheetUrl);
-  if (!res.ok) {
-    statusText.textContent = "Failed to load data.";
-    return;
-  }
+  try {
+    const res = await fetch(sheetUrl);
 
-  const text = await res.text();
-  items = sortItems(normalize(parseCSV(text)));
-  currentIndex = 0;
-  render();
-  startAutoRotate();
+    if (!res.ok) {
+      statusText.textContent = "Failed to load data.";
+      return;
+    }
+
+    const text = await res.text();
+    items = sortItems(normalize(parseCSV(text)));
+    currentIndex = 0;
+
+    if (!items.length) {
+      statusText.textContent = "No valid rows found.";
+      return;
+    }
+
+    render();
+    startAutoRotate();
+  } catch (error) {
+    console.error(error);
+    statusText.textContent = "Error loading widget data.";
+  }
 }
 
 prevBtn.onclick = () => {
