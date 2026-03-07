@@ -1,4 +1,4 @@
-const TEMPLATE_COPY_URL = "PASTE_TEMPLATE_SHEET_LINK";
+const TEMPLATE_COPY_URL = "https://docs.google.com/spreadsheets/d/124hJx2BHIy8cktjzEVT4_ZyjpxTxulhCyVChQZ9-rCg/copy";
 
 let items = [];
 let currentIndex = 0;
@@ -198,11 +198,19 @@ load(sheetInput.value);
 
 
 
-document.getElementById("copyTemplateBtn").onclick=()=>{
+document.getElementById("copyTemplateBtn").onclick = () => {
 
-window.open(TEMPLATE_COPY_URL);
+if (!TEMPLATE_COPY_URL.includes("/copy")) {
+
+alert("Template link must use the Google Sheets /copy format.");
+
+return;
 
 }
+
+window.open(TEMPLATE_COPY_URL, "_blank", "noopener,noreferrer");
+
+};
 
 
 
