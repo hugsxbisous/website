@@ -8,7 +8,6 @@ const dotRow = document.getElementById("dotRow");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const statusText = document.getElementById("statusText");
-const pageHeading = document.getElementById("pageHeading");
 const pageIntro = document.getElementById("pageIntro");
 
 function getQuery() {
@@ -365,7 +364,6 @@ document.getElementById("carouselWidget").addEventListener("mouseenter", stopAut
 document.getElementById("carouselWidget").addEventListener("mouseleave", startAutoRotate);
 
 const cfg = getQuery();
-pageHeading.textContent = cfg.title;
 pageIntro.textContent = cfg.intro;
 
 if (cfg.sheet) {
