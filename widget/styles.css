@@ -226,15 +226,52 @@ body {
 
 }
 
-.arrow-btn-left {
-  left: 10px;
+/* minimalist overlay arrows */
+
+.arrow-btn {
+
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  background: none;
+  border: none;
+
+  color: rgba(255,255,255,0.75);
+
+  font-size: 32px;
+  font-weight: 300;
+
+  cursor: pointer;
+
+  padding: 6px;
+
+  z-index: 10;
+
+  transition: opacity 0.15s ease, color 0.15s ease;
+
 }
 
-.arrow-btn-right {
-  right: 10px;
+.arrow-left {
+  left: 12px;
+}
+
+.arrow-right {
+  right: 12px;
 }
 
 .arrow-btn:hover {
-  background: rgba(0,0,0,0.55);
+
+  color: white;
+  opacity: 1;
+
+}
+
+.arrow-btn {
+  opacity: 0.35;
+}
+
+.carousel:hover .arrow-btn {
+  opacity: 0.85;
 }
 }
