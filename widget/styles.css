@@ -122,35 +122,38 @@ body {
   color: #111827;
 }
 
-/* overlay arrows */
+/* minimalist overlay arrows */
 .arrow-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: 0;
-  background: rgba(17, 24, 39, 0.82);
-  color: white;
-  font-size: 18px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 32px;
+  font-weight: 300;
   cursor: pointer;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 6px;
+  z-index: 10;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-.arrow-btn-left {
-  left: 14px;
+.arrow-left {
+  left: 12px;
 }
 
-.arrow-btn-right {
-  right: 14px;
+.arrow-right {
+  right: 12px;
+}
+
+.carousel:hover .arrow-btn {
+  opacity: 0.85;
 }
 
 .arrow-btn:hover {
-  background: rgba(17, 24, 39, 0.95);
+  color: white;
+  opacity: 1;
 }
 
 /* dots row only */
@@ -194,84 +197,15 @@ body {
     padding: 18px;
   }
 
-/* subtle overlay arrows */
+  .arrow-btn {
+    font-size: 28px;
+  }
 
-.arrow-btn {
+  .arrow-left {
+    left: 10px;
+  }
 
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-
-  background: rgba(0, 0, 0, 0.15);
-  color: white;
-
-  border: none;
-  border-radius: 6px;
-
-  width: 32px;
-  height: 32px;
-
-  font-size: 18px;
-  font-weight: 500;
-
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  z-index: 5;
-
-  transition: background 0.15s ease;
-
-}
-
-/* minimalist overlay arrows */
-
-.arrow-btn {
-
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-
-  background: none;
-  border: none;
-
-  color: rgba(255,255,255,0.75);
-
-  font-size: 32px;
-  font-weight: 300;
-
-  cursor: pointer;
-
-  padding: 6px;
-
-  z-index: 10;
-
-  transition: opacity 0.15s ease, color 0.15s ease;
-
-}
-
-.arrow-left {
-  left: 12px;
-}
-
-.arrow-right {
-  right: 12px;
-}
-
-.arrow-btn:hover {
-
-  color: white;
-  opacity: 1;
-
-}
-
-.arrow-btn {
-  opacity: 0.35;
-}
-
-.carousel:hover .arrow-btn {
-  opacity: 0.85;
-}
+  .arrow-right {
+    right: 10px;
+  }
 }
