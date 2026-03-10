@@ -58,7 +58,8 @@ body {
   min-height: 260px;
   max-height: 720px;
   overflow: hidden;
-  background: #dbe3ef00;
+  background: transparent;
+  border-radius: clamp(12px, 1.8vw, 22px);
 }
 
 /*
@@ -67,7 +68,6 @@ body {
 @supports not (aspect-ratio: 16 / 7) {
   .viewport {
     height: clamp(260px, 52vw, 720px);
-    border-radius: clamp(12px, 1.8vw, 22px);
   }
 }
 
