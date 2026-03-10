@@ -43,6 +43,7 @@ body {
 .carousel {
   position: relative;
   width: 100%;
+  margin: 0;
 }
 
 /*

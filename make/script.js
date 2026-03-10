@@ -69,6 +69,7 @@ function buildWidgetUrl(sheet) {
 
 function buildEmbedCode(widgetUrl) {
   const iframeId = `carousel-widget-${Date.now()}`;
+  const widgetOrigin = new URL(widgetUrl).origin;
 
   return `<iframe
   id="${iframeId}"
@@ -86,6 +87,8 @@ function buildEmbedCode(widgetUrl) {
   if (!iframe) return;
 
   window.addEventListener("message", function(event) {
+    if (event.origin !== "${widgetOrigin}") return;
+
     const data = event.data;
     if (!data || data.type !== "carousel-widget-height") return;
     if (!data.height) return;
