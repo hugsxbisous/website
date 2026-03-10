@@ -1,31 +1,56 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Widget Generator</title>
-
-<link rel="stylesheet" href="./styles.css">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carousel Widget Generator</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
-
 <body>
 
 <main class="page">
 
-<section class="panel">
+  <section class="panel hero-panel">
+    <div class="hero-text">
+      <h1>Carousel Widget Generator</h1>
+      <p class="intro">
+        Create embeddable carousel widgets powered by a Google Sheet.
+        Publish your sheet as CSV, generate the embed code, and place the widget anywhere.
+      </p>
 
-<h1>Carousel Widget Generator</h1>
+      <div class="button-row">
+        <a href="./make/index.html" class="btn">Create a widget</a>
+      </div>
+    </div>
 
-<p class="intro">
-Create an embeddable carousel powered by a Google Sheet.
-</p>
+    <div class="hero-preview">
+      <iframe
+        src="./widget/index.html?sheet=https://docs.google.com/spreadsheets/d/e/2PACX-1vTnUiGhyQqofnf5mO6QdGU28VQRhqiXMXVtGfiD5Fy0LkqVyGinHslpw-vN8rcB6ugnIeMVJJT3gn-A/pub?output=csv"
+        loading="lazy"
+        scrolling="no"
+        title="Carousel Widget Preview">
+      </iframe>
+    </div>
+  </section>
 
-<div class="button-row">
-<a href="./make/index.html" class="btn">Create a widget</a>
-</div>
+  <section class="panel">
+    <h2>More widget examples coming soon</h2>
+    <p class="intro">
+      This area can later hold more widget demos, documentation, tutorials, or different widget styles.
+    </p>
+  </section>
 
-</section>
+  <section class="panel placeholder-grid">
+    <div class="placeholder-card">
+      <h3>Example slot</h3>
+      <p class="intro">Use this space for another widget type or featured example.</p>
+    </div>
+
+    <div class="placeholder-card">
+      <h3>Example slot</h3>
+      <p class="intro">Use this space for another widget type or featured example.</p>
+    </div>
+  </section>
 
 </main>
 
