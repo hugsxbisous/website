@@ -192,6 +192,7 @@ function render() {
           ? linkifyText(item.blurb)
           : linkifyText(shortText);
         btn.textContent = expanded ? "Show less" : "Show more";
+        scheduleHeightPost();
       };
 
       caption.appendChild(btn);
@@ -213,6 +214,8 @@ function render() {
 
     dotRow.appendChild(dot);
   });
+
+  scheduleHeightPost();
 }
 
 function update() {
@@ -221,6 +224,8 @@ function update() {
 
   slides.forEach((s, i) => s.classList.toggle("active", i === currentIndex));
   dots.forEach((d, i) => d.classList.toggle("active", i === currentIndex));
+
+  scheduleHeightPost();
 }
 
 function showPrev() {
@@ -266,6 +271,7 @@ async function load(sheetUrl) {
 
     render();
     startAutoRotate();
+    scheduleHeightPost();
   } catch (error) {
     console.error(error);
   }
@@ -290,3 +296,28 @@ const cfg = getQuery();
 if (cfg.sheet) {
   load(cfg.sheet);
 }
+
+function postHeightToParent() {
+  if (window.parent === window) return;
+
+  const height = Math.ceil(document.documentElement.scrollHeight);
+
+  window.parent.postMessage(
+    {
+      type: "carousel-widget-height",
+      height: height
+    },
+    "*"
+  );
+}
+
+function scheduleHeightPost() {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      postHeightToParent();
+    });
+  });
+}
+
+window.addEventListener("load", scheduleHeightPost);
+window.addEventListener("resize", scheduleHeightPost);

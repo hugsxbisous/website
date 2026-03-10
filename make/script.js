@@ -68,14 +68,32 @@ function buildWidgetUrl(sheet) {
 }
 
 function buildEmbedCode(widgetUrl) {
+  const iframeId = `carousel-widget-${Date.now()}`;
+
   return `<iframe
+  id="${iframeId}"
   src="${widgetUrl}"
   width="100%"
-  height="720"
-  style="border:0; max-width:1100px;"
+  height="420"
+  style="border:0; width:100%; max-width:1100px; display:block;"
   loading="lazy"
+  scrolling="no"
   title="Carousel Widget">
-</iframe>`;
+</iframe>
+<script>
+(function() {
+  const iframe = document.getElementById("${iframeId}");
+  if (!iframe) return;
+
+  window.addEventListener("message", function(event) {
+    const data = event.data;
+    if (!data || data.type !== "carousel-widget-height") return;
+    if (!data.height) return;
+
+    iframe.style.height = data.height + "px";
+  });
+})();
+</script>`;
 }
 
 copyTemplateBtn.addEventListener("click", () => {
