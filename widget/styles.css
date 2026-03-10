@@ -67,6 +67,7 @@ body {
 @supports not (aspect-ratio: 16 / 7) {
   .viewport {
     height: clamp(260px, 52vw, 720px);
+    border-radius: clamp(12px, 1.8vw, 22px);
   }
 }
 
