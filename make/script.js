@@ -13,8 +13,6 @@
 const TEMPLATE_COPY_URL = "https://docs.google.com/spreadsheets/d/124hJx2BHIy8cktjzEVT4_ZyjpxTxulhCyVChQZ9-rCg/copy";
 const WIDGET_BASE_URL = "https://hugsxbisous.github.io/website/widget/index.html";
 
-const widgetTitleInput = document.getElementById("widgetTitleInput");
-const widgetIntroInput = document.getElementById("widgetIntroInput");
 const sheetUrlInput = document.getElementById("sheetUrlInput");
 
 const copyTemplateBtn = document.getElementById("copyTemplateBtn");
@@ -28,36 +26,23 @@ const errorBox = document.getElementById("errorBox");
 
 let currentWidgetUrl = "";
 
-/*
-  Show a success message and hide the error message.
-*/
 function showSuccess(message) {
   successBox.textContent = message;
   successBox.hidden = false;
   errorBox.hidden = true;
 }
 
-/*
-  Show an error message and hide the success message.
-*/
 function showError(message) {
   errorBox.textContent = message;
   errorBox.hidden = false;
   successBox.hidden = true;
 }
 
-/*
-  Hide both status messages.
-*/
 function clearMessages() {
   successBox.hidden = true;
   errorBox.hidden = true;
 }
 
-/*
-  Basic validation for a published Google Sheets CSV URL.
-  This is not perfect, but it catches the common mistakes.
-*/
 function looksLikeGoogleSheetsCsv(url) {
   if (!url) return false;
 
@@ -74,20 +59,14 @@ function looksLikeGoogleSheetsCsv(url) {
 }
 
 /*
-  Build the widget page URL using query parameters.
-  The widget page reads these parameters and renders the carousel.
+  Widget now only needs the sheet URL.
 */
-function buildWidgetUrl({ title, intro, sheet }) {
+function buildWidgetUrl(sheet) {
   const url = new URL(WIDGET_BASE_URL);
-
   url.searchParams.set("sheet", sheet);
-
   return url.toString();
 }
 
-/*
-  Build the iframe code that users can paste into another site.
-*/
 function buildEmbedCode(widgetUrl) {
   return `<iframe
   src="${widgetUrl}"
@@ -99,9 +78,6 @@ function buildEmbedCode(widgetUrl) {
 </iframe>`;
 }
 
-/*
-  Open the Google Sheets template in force-copy mode.
-*/
 copyTemplateBtn.addEventListener("click", () => {
   clearMessages();
 
@@ -114,14 +90,9 @@ copyTemplateBtn.addEventListener("click", () => {
   showSuccess("Template opened in a new tab. Make a copy, fill it out, publish it as CSV, then paste that CSV link here.");
 });
 
-/*
-  Generate the widget URL and iframe code.
-*/
 createWidgetBtn.addEventListener("click", () => {
   clearMessages();
 
-  const title = widgetTitleInput.value.trim() || "Embeddable Carousel Widget";
-  const intro = widgetIntroInput.value.trim() || "";
   const sheet = sheetUrlInput.value.trim();
 
   if (!WIDGET_BASE_URL || WIDGET_BASE_URL.includes("your-username.github.io")) {
@@ -139,21 +110,14 @@ createWidgetBtn.addEventListener("click", () => {
     return;
   }
 
-  currentWidgetUrl = buildWidgetUrl({ title, intro, sheet });
-  const embedCode = buildEmbedCode(currentWidgetUrl);
-
-  embedCodeOutput.textContent = embedCode;
+  currentWidgetUrl = buildWidgetUrl(sheet);
+  embedCodeOutput.textContent = buildEmbedCode(currentWidgetUrl);
   showSuccess("Embed code generated.");
 });
 
-/*
-  Open the finished widget page in a new tab for previewing.
-*/
 previewWidgetBtn.addEventListener("click", () => {
   clearMessages();
 
-  const title = widgetTitleInput.value.trim() || "Embeddable Carousel Widget";
-  const intro = widgetIntroInput.value.trim() || "";
   const sheet = sheetUrlInput.value.trim();
 
   if (!WIDGET_BASE_URL || WIDGET_BASE_URL.includes("your-username.github.io")) {
@@ -171,13 +135,10 @@ previewWidgetBtn.addEventListener("click", () => {
     return;
   }
 
-  currentWidgetUrl = buildWidgetUrl({ title, intro, sheet });
+  currentWidgetUrl = buildWidgetUrl(sheet);
   window.open(currentWidgetUrl, "_blank", "noopener,noreferrer");
 });
 
-/*
-  Copy the generated iframe code to the clipboard.
-*/
 copyEmbedBtn.addEventListener("click", async () => {
   clearMessages();
 
