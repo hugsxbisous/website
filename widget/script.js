@@ -1,7 +1,7 @@
 let items = [];
 let currentIndex = 0;
 let autoRotateTimer = null;
-const autoRotateMs = 4000;
+const autoRotateMs = 7000;
 
 const viewport = document.getElementById("carouselViewport");
 const dotRow = document.getElementById("dotRow");
