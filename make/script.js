@@ -75,7 +75,7 @@ function buildEmbedCode(widgetUrl) {
   src="${widgetUrl}"
   width="100%"
   height="420"
-  style="border:0; width:100%; max-width:1100px; display:block;"
+  style="border:0; width:100%; display:block; overflow:hidden;"
   loading="lazy"
   scrolling="no"
   title="Carousel Widget">

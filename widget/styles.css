@@ -17,6 +17,7 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -32,10 +33,11 @@ body {
 
 .widget-shell {
   width: 100%;
-  background: var(--card-bg);
-  border-radius: clamp(12px, 2vw, 24px);
-  box-shadow: var(--shadow);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
+  padding: 0
 }
 
 .carousel {
@@ -281,4 +283,8 @@ body {
   .show-more-btn {
     padding: 8px 12px;
   }
+}
+
+iframe {
+  display: block;
 }
