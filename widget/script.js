@@ -192,6 +192,7 @@ function render() {
           ? linkifyText(item.blurb)
           : linkifyText(shortText);
         btn.textContent = expanded ? "Show less" : "Show more";
+        restartAutoRotate();
         scheduleHeightPost();
       };
 
