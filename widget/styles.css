@@ -1,6 +1,6 @@
 :root {
   --page-bg: transparent;
-  --card-bg: white;
+  --card-bg: rgba(255, 255, 255, 0);
   --text: #1f2937;
   --muted: #6b7280;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
@@ -57,7 +57,7 @@ body {
   min-height: 260px;
   max-height: 720px;
   overflow: hidden;
-  background: #dbe3ef;
+  background: #dbe3ef00;
 }
 
 /*
@@ -229,7 +229,7 @@ body {
 */
 @media (max-width: 900px) {
   .viewport {
-    aspect-ratio: 16 / 8.5;
+    aspect-ratio: 16 / 7;
   }
 
   .caption {
