@@ -26,7 +26,7 @@ body {
 }
 
 .page {
-  max-width: 980px;
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
   gap: 24px;
@@ -43,6 +43,12 @@ h1,
 h2,
 p {
   margin-top: 0;
+}
+
+h1,
+h2 {
+  margin-bottom: 12px;
+  line-height: 1.15;
 }
 
 .intro {
@@ -79,10 +85,12 @@ textarea {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 18px;
   margin-bottom: 16px;
 }
 
 .btn {
+  display: inline-block;
   border: 0;
   background: var(--accent);
   color: white;
@@ -91,6 +99,13 @@ textarea {
   cursor: pointer;
   font-weight: 700;
   font-size: 0.95rem;
+  text-decoration: none;
+  line-height: 1;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:visited {
+  color: white;
 }
 
 .btn.secondary {
@@ -98,8 +113,13 @@ textarea {
   color: var(--text);
 }
 
+.btn.secondary:visited {
+  color: var(--text);
+}
+
 .btn:hover {
   transform: translateY(-1px);
+  opacity: 0.96;
 }
 
 .help-box {
@@ -146,6 +166,47 @@ code {
   padding: 2px 6px;
 }
 
+/* homepage widget demo section */
+.widget-demo {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.widget-demo-text {
+  min-width: 0;
+}
+
+.widget-demo-preview {
+  min-width: 0;
+}
+
+.widget-demo-preview iframe {
+  width: 100%;
+  min-height: 360px;
+  border: 0;
+  display: block;
+  border-radius: 18px;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* useful if the homepage has plain links elsewhere */
+a {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .widget-demo {
+    grid-template-columns: 1fr;
+  }
+
+  .widget-demo-preview iframe {
+    min-height: 300px;
+  }
+}
+
 @media (max-width: 640px) {
   body {
     padding: 20px 12px 32px;
@@ -153,5 +214,9 @@ code {
 
   .panel {
     padding: 18px;
+  }
+
+  .widget-demo-preview iframe {
+    min-height: 240px;
   }
 }
