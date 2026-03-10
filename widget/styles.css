@@ -77,6 +77,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
+  border-radius: inherit;
 }
 
 .slide.active {
@@ -94,6 +95,7 @@ body {
   background-position: center center;
   background-repeat: no-repeat;
   overflow: hidden;
+  border-radius: inherit;
 }
 
 .card::before {
@@ -101,6 +103,7 @@ body {
   position: absolute;
   inset: 0;
   background: var(--overlay);
+  border-radius: inherit;
 }
 
 .caption {
