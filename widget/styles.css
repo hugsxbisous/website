@@ -83,6 +83,7 @@ body {
   display: grid;
   gap: 8px;
   color: white;
+  padding: 20px 20px 36px;
 }
 
 .meta {
@@ -155,31 +156,38 @@ body {
   right: 10px;
 }
 
-/* dots row */
+/* dots overlay inside the carousel */
 .controls {
-  display: flex;
-  justify-content: center;
-  padding: 14px 16px 16px;
-  background: white;
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: transparent;
+  padding: 0;
+  pointer-events: none;
 }
 
 .dot-row {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  pointer-events: auto;
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: rgba(255,255,255,0.45);
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .dot.active {
-  background: black;
+  background: white;
+  transform: scale(1.15);
 }
 
 @media (max-width: 680px) {
