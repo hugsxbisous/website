@@ -105,6 +105,15 @@ function renderTimeline(items) {
   const track = document.createElement("div");
   track.className = "timeline-track";
 
+  const line = document.createElement("div");
+  line.className = "timeline-line";
+
+  const arrow = document.createElement("div");
+  arrow.className = "timeline-arrow";
+
+  track.appendChild(line);
+  track.appendChild(arrow);
+
   items.forEach(item => {
     const block = document.createElement("div");
     block.className = "year-block";
@@ -135,16 +144,23 @@ function renderTimeline(items) {
 
   const legend = document.createElement("div");
   legend.className = "legend";
-  legend.innerHTML = `
-    <div class="legend-item">
-      <span class="legend-swatch phd"></span>
-      <span>PhDs</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch masters"></span>
-      <span>Master’s</span>
-    </div>
+
+  const phdItem = document.createElement("div");
+  phdItem.className = "legend-item";
+  phdItem.innerHTML = `
+    <span class="legend-swatch phd"></span>
+    <span>PhDs</span>
   `;
+
+  const mastersItem = document.createElement("div");
+  mastersItem.className = "legend-item";
+  mastersItem.innerHTML = `
+    <span class="legend-swatch masters"></span>
+    <span>Master’s</span>
+  `;
+
+  legend.appendChild(phdItem);
+  legend.appendChild(mastersItem);
 
   timelineRoot.appendChild(track);
   timelineRoot.appendChild(legend);
