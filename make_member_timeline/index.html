@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Member Timeline Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="page">
+
+  <section class="panel">
+    <h1>Member Timeline Widget Generator</h1>
+    <p class="intro">
+      Create a scrollable member timeline powered by a Google Sheet. Make a copy of the template, publish it as CSV, then generate your embed code.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Create your widget</h2>
+
+    <label for="sheetUrlInput">Published Google Sheet CSV URL</label>
+    <input
+      id="sheetUrlInput"
+      type="text"
+      placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv&gid=0"
+    >
+
+    <div class="button-row">
+      <button id="copyTemplateBtn" class="btn secondary">Open template sheet</button>
+      <button id="createWidgetBtn" class="btn">Create widget code</button>
+      <button id="previewWidgetBtn" class="btn secondary">Open widget preview</button>
+    </div>
+
+    <div class="help-box">
+      <strong>Template headers must be exactly:</strong><br>
+      <code>year</code>, <code>phd</code>, <code>masters</code>
+      <br><br>
+      Years with 0 students in both columns will be hidden automatically.
+      <br><br>
+      Publish the sheet with:
+      <br>
+      <code>File → Share → Publish to web → CSV</code>
+    </div>
+
+    <div id="successBox" class="message success" hidden></div>
+    <div id="errorBox" class="message error" hidden></div>
+  </section>
+
+  <section class="panel">
+    <h2>Generated embed code</h2>
+    <pre id="embedCodeOutput">Click "Create widget code" to generate the iframe snippet.</pre>
+
+    <div class="button-row">
+      <button id="copyEmbedBtn" class="btn secondary">Copy embed code</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
