@@ -77,13 +77,19 @@ function normalize(data) {
     .sort((a, b) => a.year - b.year);
 }
 
-function makeDots(count, className) {
+function makeDotGrid(phdCount, mastersCount) {
   const group = document.createElement("div");
   group.className = "dot-group";
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < phdCount; i++) {
     const dot = document.createElement("span");
-    dot.className = `dot ${className}`;
+    dot.className = "dot phd";
+    group.appendChild(dot);
+  }
+
+  for (let i = 0; i < mastersCount; i++) {
+    const dot = document.createElement("span");
+    dot.className = "dot masters";
     group.appendChild(dot);
   }
 
@@ -128,13 +134,7 @@ function renderTimeline(items) {
     const compartment = document.createElement("div");
     compartment.className = "year-compartment";
 
-    if (item.phd > 0) {
-      compartment.appendChild(makeDots(item.phd, "phd"));
-    }
-
-    if (item.masters > 0) {
-      compartment.appendChild(makeDots(item.masters, "masters"));
-    }
+    compartment.appendChild(makeDotGrid(item.phd, item.masters));
 
     block.appendChild(label);
     block.appendChild(tick);
