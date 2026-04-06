@@ -1,8 +1,8 @@
 :root {
   --page-bg: transparent;
   --card-bg: transparent;
-  --text: #1f2937;
-  --line: #ef3ea8;
+  --text: #000000;
+  --line: #000000;
   --phd: #1f4db8;
   --masters: #67d7e5;
   --tick-width: 120px;
@@ -141,7 +141,7 @@ body {
   justify-content: flex-end;
   padding: 20px 16px 0;
   color: var(--text);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .legend-item {
