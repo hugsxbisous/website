@@ -71,8 +71,7 @@ function normalize(data) {
     }))
     .filter(item =>
       Number.isFinite(item.year) &&
-      item.year > 0 &&
-      (item.phd > 0 || item.masters > 0)
+      item.year > 0
     )
     .sort((a, b) => a.year - b.year);
 }

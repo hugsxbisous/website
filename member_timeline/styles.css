@@ -38,11 +38,13 @@ body {
 }
 
 .timeline-scroll {
+  position: relative;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 16px 12px 8px;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 60 px;
 }
 
 .timeline-root {
@@ -138,13 +140,27 @@ body {
 }
 
 .legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 30;
+
   display: flex;
-  gap: 28px;
+  gap: 20px;
   align-items: center;
-  justify-content: flex-end;
-  padding: 20px 16px 0;
-  color: var(--text);
+
+  padding: 10px 14px;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+
+  border-radius: 10px;
+
+  font-size: 14px;
   font-weight: 400;
+  color: var(--text);
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .legend-item {
