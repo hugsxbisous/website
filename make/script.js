@@ -11,7 +11,7 @@
   https://your-username.github.io/your-repo/website/widget/index.html
 */
 const TEMPLATE_COPY_URL = "https://docs.google.com/spreadsheets/d/124hJx2BHIy8cktjzEVT4_ZyjpxTxulhCyVChQZ9-rCg/copy";
-const WIDGET_BASE_URL = "https://hugsxbisous.github.io/website/widget/index.html";
+const WIDGET_BASE_URL = "https://hugsxbisous.github.io/website/news_carousel/index.html";
 
 const sheetUrlInput = document.getElementById("sheetUrlInput");
 
