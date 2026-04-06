@@ -5,7 +5,7 @@
   --line: #000000;
   --phd: #1f4db8;
   --masters: #67d7e5;
-  --tick-width: 120px;
+  --tick-width: 200px;
 }
 
 * {
@@ -87,7 +87,7 @@ body {
 }
 
 .year-label {
-  font-size: clamp(25px, 3.6vw, 51px);
+  font-size: clamp(15px, 3.6vw, 25px);
   line-height: 1;
   font-weight: 700;
   color: var(--line);
@@ -95,8 +95,8 @@ body {
 }
 
 .tick {
-  width: 10px;
-  height: 44px;
+  width: 6px;
+  height: 30px;
   background: var(--line);
   border-radius: 999px;
   margin: 0 auto;
@@ -191,7 +191,7 @@ body {
   }
 
   .year-label {
-    font-size: clamp(22px, 6vw, 34px);
+    font-size: clamp(12px, 6vw, 16px);
     margin-bottom: 24px;
   }
 
