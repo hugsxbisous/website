@@ -63,20 +63,23 @@ body {
   left: 20px;
   right: 20px;
   top: 86px;
-  height: 8px;
+  height: 3px;
   background: var(--line);
   border-radius: 999px;
 }
 
 .timeline-arrow {
   position: absolute;
-  right: 6px;
+  right: 8px;
   top: 66px;
-  width: 0;
-  height: 0;
-  border-top: 24px solid transparent;
-  border-bottom: 24px solid transparent;
-  border-left: 30px solid var(--line);
+
+  width: 14px;
+  height: 14px;
+
+  border-top: 2px solid var(--line);
+  border-right: 2px solid var(--line);
+
+  transform: rotate(45deg);   /* creates clean arrow */
 }
 
 .year-block {
@@ -87,16 +90,16 @@ body {
 }
 
 .year-label {
-  font-size: clamp(15px, 3.6vw, 25px);
+  font-size: clamp(13px, 2.2vw, 18px);
   line-height: 1;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--line);
-  margin-bottom: 34px;
+  margin-bottom: 20px;
 }
 
 .tick {
-  width: 6px;
-  height: 30px;
+  width: 2px;
+  height: 20px;
   background: var(--line);
   border-radius: 999px;
   margin: 0 auto;
@@ -176,7 +179,7 @@ body {
   }
 
   .timeline-track {
-    padding: 32px 28px 0;
+    padding: 28px 36px 0;
   }
 
   .timeline-line {
