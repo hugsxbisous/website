@@ -1,5 +1,5 @@
 const TEMPLATE_COPY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPijOiKx9bW01Ffj3nyervBJ4KBUZ1o3A-SnmFGo1FCJj3q7OcCHBpW0PySZqffl8XgYd86EtPpl7M/pub?output=csv/copy";
-const WIDGET_BASE_URL = "https://hugsxbisous.github.io/page/member_timeline/index.html";
+const WIDGET_BASE_URL = "https://hugsxbisous.github.io/website/member_timeline/index.html";
 const sheetUrlInput = document.getElementById("sheetUrlInput");
 const copyTemplateBtn = document.getElementById("copyTemplateBtn");
 const createWidgetBtn = document.getElementById("createWidgetBtn");
